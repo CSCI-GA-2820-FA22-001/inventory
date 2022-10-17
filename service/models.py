@@ -3,6 +3,7 @@ Models for YourResourceModel
 
 All of the models are stored in this module
 """
+from email.policy import default
 import logging
 from flask_sqlalchemy import SQLAlchemy
 
@@ -28,9 +29,11 @@ class YourResourceModel(db.Model):
     # Table Schema
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
+    quantity = db.Column(db.Integer)
+    description = db.Column(db.String(63), default='')
 
     def __repr__(self):
-        return "<YourResourceModel %r id=[%s]>" % (self.name, self.id)
+        return "<YourResourceModel %r id=[%s]>" % (self.id, self.name, self.quantity, self.description)
 
     def create(self):
         """
