@@ -10,33 +10,44 @@ import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from service import app
-from service.models import db
+from service.models import db, init_db, Inventory
 from service.common import status  # HTTP Status Codes
 
 
+DATABASE_URI = os.getenv(
+    "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
+)
+BASE_URL = "/inventory"
+
 ######################################################################
-#  T E S T   C A S E S
+#  T E S T   I N V E N T O R Y   S E R V I C E
 ######################################################################
 class TestYourResourceServer(TestCase):
     """ REST API Server Tests """
 
     @classmethod
     def setUpClass(cls):
-        """ This runs once before the entire test suite """
-        pass
+        """Run once before all tests"""
+        app.config["TESTING"] = True
+        app.config["DEBUG"] = False
+        # Set up the test database
+        app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
+        app.logger.setLevel(logging.CRITICAL)
+        init_db(app)
 
     @classmethod
     def tearDownClass(cls):
-        """ This runs once after the entire test suite """
-        pass
+        """Run once after all tests"""
+        db.session.close()
 
     def setUp(self):
-        """ This runs before each test """
-        self.app = app.test_client()
+        """Runs before each test"""
+        self.client = app.test_client()
+        db.session.query(Inventory).delete()  # clean up the last tests
+        db.session.commit()
 
     def tearDown(self):
-        """ This runs after each test """
-        pass
+        db.session.remove()
 
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
@@ -44,5 +55,30 @@ class TestYourResourceServer(TestCase):
 
     def test_index(self):
         """ It should call the home page """
-        resp = self.app.get("/")
+        resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_get_inventory_list(self):
+        """It should Get a list of Inventory"""
+        self.client.get(BASE_URL)
+        # do some asserts
+
+    def test_get_inventory(self):
+        """It should Get a single Inventory item"""
+        self.client.get(f"{BASE_URL}/1")
+        # do some asserts
+
+    def test_create_inventory(self):
+        """It should Create a new Inventory item"""
+        self.client.post(BASE_URL, json={})
+        # do some asserts
+
+    def test_update_inventory(self):
+        """It should Update an existing Inventory item"""
+        self.client.put(f"{BASE_URL}/1", json={})
+        # do some asserts
+
+    def test_delete_inventory(self):
+        """It should Delete a Inventory item"""
+        self.client.delete(f"{BASE_URL}/1")
+        # do some asserts
