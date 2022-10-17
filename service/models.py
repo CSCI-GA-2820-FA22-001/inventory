@@ -3,6 +3,7 @@ Models for Inventory
 
 All of the models are stored in this module
 """
+from email.policy import default
 import logging
 from flask_sqlalchemy import SQLAlchemy
 
@@ -31,10 +32,19 @@ class Inventory(db.Model):
 
     # Table Schema
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
+    name = db.Column(db.String(63), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+    description = db.Column(db.String(63), default='')
+
+    def __init__(self,id:int, name: str, quantity: int, description: str=''):
+        """Constructor for Item in Inventory""" 
+        self.id = id
+        self.name = name
+        self.quantity = quantity
+        self.description = description
 
     def __repr__(self):
-        return "<Inventory %r id=[%s]>" % (self.name, self.id)
+        return "<Inventory %r id=[%s], Item name=[%s], Item Quantity=[%s], Item Description=[%s]>" % (self.id, self.name, self.quantity, self.description)
 
     def create(self):
         """
@@ -49,7 +59,7 @@ class Inventory(db.Model):
         """
         Updates a Inventory to the database
         """
-        logger.info("Saving %s", self.name)
+        logger.info("Updating %s", self.name)
         db.session.commit()
 
     def delete(self):
@@ -60,7 +70,7 @@ class Inventory(db.Model):
 
     def serialize(self):
         """ Serializes a Inventory into a dictionary """
-        return {"id": self.id, "name": self.name}
+        return {"id": self.id, "name": self.name, "quantity": self.quantity, "description": self.description}
 
     def deserialize(self, data):
         """
@@ -70,7 +80,10 @@ class Inventory(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
+            self.id = data["id"]
             self.name = data["name"]
+            self.quantity = data["quantity"]
+            self.description = data["description"]
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Inventory: missing " + error.args[0]
