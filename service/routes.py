@@ -5,6 +5,7 @@ Describe what your service does here
 """
 
 from flask import Flask, jsonify, request, url_for, make_response, abort
+import json
 from .common import status  # HTTP Status Codes
 from service.models import Inventory
 
@@ -17,9 +18,23 @@ from . import app
 ######################################################################
 @app.route("/")
 def index():
-    """ Root URL response """
+    """ 
+    Root URL response 
+    This sends a basic list of endpoints available from the Flask App
+    """
+    routes = {}
+    for r in app.url_map._rules:
+        routes[r.rule] = {}
+        routes[r.rule]["functionName"] = r.endpoint
+        routes[r.rule]["methods"] = list(r.methods)
+    routes.pop("/static/<path:filename>")
+    
     return (
-        "Reminder: return some useful information in json format about the service here",
+        jsonify(
+            name="Inventory Service REST API",
+            version="1.0",
+            paths=routes
+        ),
         status.HTTP_200_OK,
     )
 
