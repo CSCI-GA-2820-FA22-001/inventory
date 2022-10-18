@@ -24,9 +24,8 @@ class DataValidationError(Exception):
 class Condition(Enum):
     """Enumeration of different product conditions"""
     NEW = 0
-    OLD = 1
-    USED = 2
-    OPEN_BOX = 3
+    USED = 1
+    OPEN_BOX = 2
 
 
 class Inventory(db.Model):

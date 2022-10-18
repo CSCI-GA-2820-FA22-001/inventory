@@ -15,7 +15,7 @@ class InventoryFactory(factory.Factory):
         model = Inventory
 
     pid = factory.Sequence(lambda n: n)
-    condition = FuzzyChoice(choices=[Condition.NEW, Condition.OLD, Condition.OPEN_BOX, Condition.USED])
+    condition = FuzzyChoice(choices=[Condition.NEW, Condition.OPEN_BOX, Condition.USED])
     name = FuzzyText(length=10)
     quantity = FuzzyInteger(1,100)
     restock_level = FuzzyInteger(1,100)
