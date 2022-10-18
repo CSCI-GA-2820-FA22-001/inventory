@@ -55,8 +55,7 @@ class Inventory(db.Model):
         """
         Creates a Inventory to the database
         """
-        logger.info("Creating %s", self.name)
-        self.pid = None  # pid must be none to generate next primary key
+        logger.info("Creating item with pid: %d, name: %s, condition: %s", self.pid, self.name, self.condition)
         db.session.add(self)
         db.session.commit()
 
