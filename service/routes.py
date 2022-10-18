@@ -4,10 +4,11 @@ My Service
 Describe what your service does here
 """
 
+from urllib import response
 from flask import Flask, jsonify, request, url_for, make_response, abort
 import json
 from .common import status  # HTTP Status Codes
-from service.models import Inventory
+from service.models import DataValidationError, Inventory, Condition
 
 # Import Flask application
 from . import app
@@ -79,15 +80,32 @@ def create_inventory():
 ######################################################################
 # UPDATE AN EXISTING INVENTORY ITEM
 ######################################################################
-@app.route("/inventory/<int:item_id>", methods=["PUT"])
-def update_inventory(item_id):
+@app.route("/inventory/pid/<int:pid>/condition/<int:condition_id>", methods=["PUT"])
+def update_inventory(pid, condition_id):
     """
     Update an inventory item
 
     This endpoint will update an inventory item based the body that is posted
     """
-    app.logger.info("Request to update inventory item with id: %s", item_id)
-    return {}, status.HTTP_200_OK
+    app.logger.info("Request to update inventory item with id: %s and condition id", pid, condition_id)
+    check_content_type("application/json")
+    if Condition.has_value(condition_id) is False:
+        app.logger.info("Condition %s not in value map", condition_id)
+        abort(status.HTTP_400_BAD_REQUEST, "Condition id not supported")
+
+    item = Inventory.find_by_pid_condition(pid=pid, condition=Condition(condition_id))
+    if item is None:
+        abort(status.HTTP_404_NOT_FOUND, f"Item with Product ID '{pid}' and Condition '{Condition(condition_id)}' not found")
+    
+    try:
+        item.deserialize(request.get_json())
+        item.pid = pid
+        item.condition = Condition(condition_id)
+        item.update()
+    except DataValidationError as err:
+        abort(status.HTTP_400_BAD_REQUEST, err)
+    
+    return item.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
@@ -113,3 +131,21 @@ def init_db():
     """ Initializes the SQLAlchemy app """
     global app
     Inventory.init_db(app)
+
+def check_content_type(content_type):
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        f"Content-Type must be {content_type}",
+    )

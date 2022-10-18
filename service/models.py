@@ -27,6 +27,10 @@ class Condition(Enum):
     USED = 1
     OPEN_BOX = 2
 
+    @classmethod
+    def has_value(condition_id):
+        return condition_id in Condition._value2member_map_
+
 
 class Inventory(db.Model):
     """
@@ -80,24 +84,16 @@ class Inventory(db.Model):
 
     def serialize(self):
         """ Serializes a Inventory into a dictionary """
-        return {"pid": self.pid, "condition": self.condition, "name": self.name, "quantity": self.quantity, "restock_level": self.restock_level, "available":self.available}
+        return {"pid": self.pid, "condition": self.condition.name, "name": self.name, "quantity": self.quantity, "restock_level": self.restock_level, "available":self.available}
 
     def deserialize(self, data):
         """
-        Deserializes a Inventory from a dictionary
+        Deserializes an Inventory Item from a dictionary
 
         Args:
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.pid = data["pid"]
-            if isinstance(data["condition"], Condition):
-                self.condition = data["condition"]
-            else:
-                raise DataValidationError(
-                    "Invalid type for Condition [condition]"
-                    + str(type(data["condition"]))
-                )
             self.name = data["name"]
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]

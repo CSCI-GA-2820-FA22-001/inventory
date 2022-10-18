@@ -137,7 +137,7 @@ class TestInventory(unittest.TestCase):
         self.assertIn("pid", data)
         self.assertEqual(data["pid"], item.pid)
         self.assertIn("condition", data)
-        self.assertEqual(data["condition"], item.condition)
+        self.assertEqual(data["condition"], item.condition.name)
         self.assertIn("name", data)
         self.assertEqual(data["name"], item.name)
         self.assertIn("quantity", data)
@@ -154,7 +154,7 @@ class TestInventory(unittest.TestCase):
         item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
         item.deserialize(data)
         self.assertNotEqual(item, None)
-        self.assertEqual(item.pid, data["pid"])
+        self.assertEqual(item.pid, 1)
         self.assertEqual(item.name, data["name"])
         self.assertEqual(item.quantity, data["quantity"])
         self.assertEqual(item.restock_level, data["restock_level"])
@@ -163,14 +163,6 @@ class TestInventory(unittest.TestCase):
     def test_deserialize_missing_data(self):
         """It should not deserialize an Item with missing data"""
         data = {"id": 1, "name": "Test Name"}
-        item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
-        self.assertRaises(DataValidationError, item.deserialize, data)
-
-    def test_deserialize_bad_condition(self):
-        """It should not deserialize a bad available attribute"""
-        test_item = InventoryFactory()
-        data = test_item.serialize()
-        data["condition"] = "true"
         item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
         self.assertRaises(DataValidationError, item.deserialize, data)
 
