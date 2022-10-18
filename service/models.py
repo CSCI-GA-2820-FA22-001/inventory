@@ -3,8 +3,8 @@ Models for Inventory
 
 All of the models are stored in this module
 """
-from email.policy import default
 import logging
+from enum import Enum
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger("flask.app")
@@ -21,7 +21,11 @@ def init_db(app):
 class DataValidationError(Exception):
     """ Used for an data validation errors when deserializing """
 
-    pass
+class Condition(Enum):
+    """Enumeration of different product conditions"""
+    NEW = 0
+    USED = 1
+    OPEN_BOX = 2
 
 
 class Inventory(db.Model):
@@ -33,13 +37,13 @@ class Inventory(db.Model):
 
     # Table Schema
     pid = db.Column(db.Integer, primary_key=True)
-    condition = db.Column(db.String(63), primary_key=True)
+    condition = db.Column(db.Enum(Condition), primary_key=True)
     name = db.Column(db.String(63), nullable=False)
     quantity = db.Column(db.Integer, default=1)
     restock_level = db.Column(db.Integer)
     available = db.Column(db.Integer)
 
-    def __init__(self, pid: int, condition: str, name: str, quantity: int, restock_level: int, available: int):
+    def __init__(self, pid: int, condition: Condition, name: str, quantity: int, restock_level: int, available: int):
         """Constructor for Item in Inventory"""
         self.pid = pid
         self.condition = condition
@@ -49,11 +53,11 @@ class Inventory(db.Model):
         self.available = available
 
     def __repr__(self):
-        return "<Inventory Product id=[%s], Condition=[%s], Name=[%s], Quantity=[%s], Restock_level=[%d], Available=[%d]>" % (self.pid, self.condition, self.name, self.quantity, self.restock_level, self.available)
+        return "<Inventory Product id=[%s], Condition=[%s], Name=[%s], Quantity=[%s], Restock_level=[%d], Available=[%d]>" % (self.pid, Condition(self.condition), self.name, self.quantity, self.restock_level, self.available)
 
     def create(self):
         """
-        Creates a Inventory to the database
+        Creates an Item in the database
         """
         logger.info("Creating item with pid: %d, name: %s, condition: %s", self.pid, self.name, self.condition)
         db.session.add(self)
@@ -61,8 +65,10 @@ class Inventory(db.Model):
 
     def update(self):
         """
-        Updates a Inventory to the database
+        Updates an Item to the database
         """
+        if(self.pid is None):
+            raise DataValidationError("No ID present for item in update")# Should not update an item with no ID
         logger.info("Updating %s", self.name)
         db.session.commit()
 
@@ -85,19 +91,38 @@ class Inventory(db.Model):
         """
         try:
             self.pid = data["pid"]
-            self.condition = data["condition"]
+            if isinstance(data["condition"], Condition):
+                self.condition = data["condition"]
+            else:
+                raise DataValidationError(
+                    "Invalid type for Condition [condition]"
+                    + str(type(data["condition"]))
+                )
             self.name = data["name"]
-            self.quantity = data["quantity"]
-            self.restock_level = data["restock_level"]
-            self.available = data["available"]
+            if isinstance(data["quantity"], int):
+                self.quantity = data["quantity"]
+            else:
+                raise DataValidationError(
+                    "Invalid type for int [quantity]"
+                    + str(type(data["quantity"]))
+                )
+            if isinstance(data["restock_level"], int):
+                self.restock_level = data["restock_level"]
+            else:
+                raise DataValidationError(
+                    "Invalid type for int [restock_level]"
+                    + str(type(data["restock_level"]))
+                )
+            if isinstance(data["available"], int):
+                self.available = data["available"]
+            else:
+                raise DataValidationError(
+                    "Invalid type for int [available]"
+                    + str(type(data["available"]))
+                )
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Inventory: missing " + error.args[0]
-            )
-        except TypeError as error:
-            raise DataValidationError(
-                "Invalid Inventory: body of request contained bad or no data - "
-                "Error message: " + error
             )
         return self
 
