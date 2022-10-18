@@ -85,7 +85,7 @@ class TestYourResourceServer(TestCase):
         test_item.create()
         self.assertEqual(Inventory.find_by_pid_condition(test_item.pid, test_item.condition), test_item)
         
-        response = self.client.delete(f"{BASE_URL}/{test_item.pid}/{test_item.condition.value}")
+        response = self.client.delete(f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         self.assertEqual(Inventory.find_by_pid_condition(test_item.pid, test_item.condition), None)

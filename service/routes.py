@@ -93,7 +93,7 @@ def update_inventory(item_id):
 ######################################################################
 # DELETE A INVENTORY ITEM
 ######################################################################
-@app.route("/inventory/<int:pid>/<int:condition>", methods=["DELETE"])
+@app.route("/inventory/pid/<int:pid>/condition/<int:condition>", methods=["DELETE"])
 def delete_inventory(pid, condition):
     """
     Delete an inventory item
