@@ -118,10 +118,11 @@ def delete_inventory(pid, condition):
 
     This endpoint will delete an inventory item based the id specified in the path
     """
-    app.logger.info("Request to delete inventory item with pid: %s and condition: %s", pid, Condition(condition))
-    item = Inventory.find_by_pid_condition(pid, Condition(condition))
-    if item:
-        item.delete()
+    if(Condition.has_value(condition) is True):
+        app.logger.info("Request to delete inventory item with pid: %s and condition: %s", pid, Condition(condition))
+        item = Inventory.find_by_pid_condition(pid, Condition(condition))
+        if item:
+            item.delete()
         app.logger.info("Inventory item with pid: %s and condition: %s successfully deleted", pid, Condition(condition))
     return "", status.HTTP_204_NO_CONTENT
 

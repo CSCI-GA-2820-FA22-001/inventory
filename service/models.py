@@ -28,8 +28,8 @@ class Condition(Enum):
     OPEN_BOX = 2
 
     @classmethod
-    def has_value(condition_id):
-        return condition_id in Condition._value2member_map_
+    def has_value(cls, condition_id):
+        return condition_id in cls._value2member_map_
 
 
 class Inventory(db.Model):
