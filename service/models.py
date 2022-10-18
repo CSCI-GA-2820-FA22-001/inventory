@@ -3,8 +3,8 @@ Models for Inventory
 
 All of the models are stored in this module
 """
-from email.policy import default
 import logging
+from enum import Enum
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger("flask.app")
@@ -20,7 +20,11 @@ def init_db(app):
 class DataValidationError(Exception):
     """ Used for an data validation errors when deserializing """
 
-    pass
+class Condition(Enum):
+    """Enumeration of different product conditions"""
+    NEW = 0
+    OLD = 1
+    USED = 2
 
 
 class Inventory(db.Model):
@@ -32,23 +36,27 @@ class Inventory(db.Model):
 
     # Table Schema
     id = db.Column(db.Integer, primary_key=True)
+    condition = db.Column(db.String(63), primary_key=True)
     name = db.Column(db.String(63), nullable=False)
     quantity = db.Column(db.Integer, default=1)
-    description = db.Column(db.String(63), default='')
+    restock_level = db.Column(db.Integer)
+    minimum_amount = db.Column(db.Integer)
+    
 
-    def __init__(self,id:int, name: str, quantity: int, description: str=''):
+    def __init__(self, id:int, name: str, quantity: int, restock_level: int, minimum_amount: int):
         """Constructor for Item in Inventory""" 
         self.id = id
         self.name = name
         self.quantity = quantity
-        self.description = description
+        self.restock_level = restock_level
+        self.minimum_amount = minimum_amount
 
     def __repr__(self):
-        return "<Inventory %r id=[%s], Item name=[%s], Item Quantity=[%s], Item Description=[%s]>" % (self.id, self.name, self.quantity, self.description)
+        return "<Inventory Item id=[%s], Item name=[%s], Item Quantity=[%s], Item Description=[%s]>" % (self.id, self.name, self.quantity, self.description)
 
     def create(self):
         """
-        Creates a Inventory to the database
+        Creates an Item in the database
         """
         logger.info("Creating %s", self.name)
         self.id = None  # id must be none to generate next primary key
@@ -57,8 +65,10 @@ class Inventory(db.Model):
 
     def update(self):
         """
-        Updates a Inventory to the database
+        Updates an Item to the database
         """
+        if(self.id is None):
+            raise DataValidationError("No ID present for item in update")# Should not update an item with no ID
         logger.info("Updating %s", self.name)
         db.session.commit()
 
@@ -80,7 +90,6 @@ class Inventory(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.id = data["id"]
             self.name = data["name"]
             self.quantity = data["quantity"]
             self.description = data["description"]
