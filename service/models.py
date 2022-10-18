@@ -17,6 +17,7 @@ def init_db(app):
     """Initialize the SQLAlchemy app"""
     Inventory.init_db(app)
 
+
 class DataValidationError(Exception):
     """ Used for an data validation errors when deserializing """
 
@@ -31,27 +32,31 @@ class Inventory(db.Model):
     app = None
 
     # Table Schema
-    id = db.Column(db.Integer, primary_key=True)
+    pid = db.Column(db.Integer, primary_key=True)
+    condition = db.Column(db.String(63), primary_key=True)
     name = db.Column(db.String(63), nullable=False)
     quantity = db.Column(db.Integer, default=1)
-    description = db.Column(db.String(63), default='')
+    restock_level = db.Column(db.Integer)
+    available = db.Column(db.Integer)
 
-    def __init__(self,id:int, name: str, quantity: int, description: str=''):
-        """Constructor for Item in Inventory""" 
-        self.id = id
+    def __init__(self, pid: int, condition: str, name: str, quantity: int, restock_level: int, available: int):
+        """Constructor for Item in Inventory"""
+        self.pid = pid
+        self.condition = condition
         self.name = name
         self.quantity = quantity
-        self.description = description
+        self.restock_level = restock_level
+        self.available = available
 
     def __repr__(self):
-        return "<Inventory %r id=[%s], Item name=[%s], Item Quantity=[%s], Item Description=[%s]>" % (self.id, self.name, self.quantity, self.description)
+        return "<Inventory Product id=[%s], Condition=[%s], Name=[%s], Quantity=[%s], Restock_level=[%d], Available=[%d]>" % (self.pid, self.condition, self.name, self.quantity, self.restock_level, self.available)
 
     def create(self):
         """
         Creates a Inventory to the database
         """
         logger.info("Creating %s", self.name)
-        self.id = None  # id must be none to generate next primary key
+        self.pid = None  # pid must be none to generate next primary key
         db.session.add(self)
         db.session.commit()
 
@@ -70,7 +75,7 @@ class Inventory(db.Model):
 
     def serialize(self):
         """ Serializes a Inventory into a dictionary """
-        return {"id": self.id, "name": self.name, "quantity": self.quantity, "description": self.description}
+        return {"pid": self.pid, "condition": self.condition, "name": self.name, "quantity": self.quantity, "restock_level": self.restock_level, "available":self.available}
 
     def deserialize(self, data):
         """
@@ -80,10 +85,12 @@ class Inventory(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.id = data["id"]
+            self.pid = data["pid"]
+            self.condition = data["condition"]
             self.name = data["name"]
             self.quantity = data["quantity"]
-            self.description = data["description"]
+            self.restock_level = data["restock_level"]
+            self.available = data["available"]
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Inventory: missing " + error.args[0]
@@ -112,10 +119,17 @@ class Inventory(db.Model):
         return cls.query.all()
 
     @classmethod
-    def find(cls, by_id):
+    def find(cls, pid):
         """ Finds a Inventory by it's ID """
-        logger.info("Processing lookup for id %s ...", by_id)
-        return cls.query.get(by_id)
+        logger.info("Processing lookup for id %s ...", pid)
+        return cls.query.filter(cls.pid == pid)
+
+    @classmethod
+    def find_by_pid_condition(cls, pid, condition):
+        """ Finds a Inventory by it's ID and condition """
+        logger.info(
+            "Processing lookup for pid %s with condition %s  ...", pid, condition)
+        return cls.query.get((pid, condition))
 
     @classmethod
     def find_by_name(cls, name):
