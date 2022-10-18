@@ -11,7 +11,8 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from service import app
 from service.models import db, init_db, Inventory
-from service.common import status  # HTTP Status Codes
+from service.common import status
+from tests.factories import InventoryFactory  # HTTP Status Codes
 
 
 DATABASE_URI = os.getenv(
@@ -80,5 +81,11 @@ class TestYourResourceServer(TestCase):
 
     def test_delete_inventory(self):
         """It should Delete a Inventory item"""
-        self.client.delete(f"{BASE_URL}/1")
-        # do some asserts
+        test_item = InventoryFactory()
+        test_item.create()
+        self.assertEqual(Inventory.find_by_pid_condition(test_item.pid, test_item.condition), test_item)
+        
+        response = self.client.delete(f"{BASE_URL}/{test_item.pid}/{test_item.condition.value}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertEqual(Inventory.find_by_pid_condition(test_item.pid, test_item.condition), None)
