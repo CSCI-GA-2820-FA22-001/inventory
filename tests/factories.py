@@ -2,8 +2,8 @@
 Test Factory to make fake objects for testing
 """
 import factory
-from factory.fuzzy import FuzzyInteger, FuzzyText
-from service.models import Inventory
+from factory.fuzzy import FuzzyInteger, FuzzyText, FuzzyChoice
+from service.models import Inventory, Condition
 
 
 class InventoryFactory(factory.Factory):
@@ -14,7 +14,9 @@ class InventoryFactory(factory.Factory):
 
         model = Inventory
 
-    id = factory.Sequence(lambda n: n)
-    name = factory.Faker('first_name')
-    quantity = FuzzyInteger(1,10)
-    description = FuzzyText(length=10)
+    pid = factory.Sequence(lambda n: n)
+    condition = FuzzyChoice(choices=[Condition.NEW, Condition.OLD, Condition.OPEN_BOX, Condition.USED])
+    name = FuzzyText(length=10)
+    quantity = FuzzyInteger(1,100)
+    restock_level = FuzzyInteger(1,100)
+    available = FuzzyInteger(1,100)
