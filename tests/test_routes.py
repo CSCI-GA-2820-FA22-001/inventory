@@ -75,8 +75,6 @@ class TestInventoryServer(TestCase):
         self.assertEqual(data["name"], test_inventory.name)
 
 
-
-
     def test_create_inventory(self):
         """It should Create a new Inventory item"""
         self.client.post(BASE_URL, json={})
