@@ -67,8 +67,15 @@ class TestInventoryServer(TestCase):
 
     def test_get_inventory(self):
         """It should Get a single Inventory item"""
-        self.client.get(f"{BASE_URL}/1")
-        # do some asserts
+
+        test_inventory = self._create_inventory(1)[0]
+        response = self.client.get(f"{BASE_URL}/{test_inventory.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["name"], test_inventory.name)
+
+
+
 
     def test_create_inventory(self):
         """It should Create a new Inventory item"""

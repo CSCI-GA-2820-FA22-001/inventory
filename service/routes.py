@@ -60,8 +60,14 @@ def get_inventory(item_id):
 
     This endpoint will return an inventory item based on it's id
     """
+
     app.logger.info("Request for inventory item with id: %s", item_id)
-    return {}, status.HTTP_200_OK
+    inventory = Inventory.find(item_id)
+    if not inventory:
+        abort(status.HTTP_404_NOT_FOUND, f"Inventory with id '{item_id}' was not found.")
+
+    app.logger.info("Returning inventory: %s", inventory.f_name)
+    return jsonify(inventory.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
