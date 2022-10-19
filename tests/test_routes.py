@@ -62,8 +62,13 @@ class TestInventoryServer(TestCase):
 
     def test_get_inventory_list(self):
         """It should Get a list of Inventory"""
-        self.client.get(BASE_URL)
-        # do some asserts
+        test_item_number = 3
+        for _ in range(test_item_number):
+            test_item = InventoryFactory()
+            test_item.create()
+        response = self.client.get(BASE_URL)
+        data = response.get_json()
+        self.assertEqual(test_item_number, len(data))
 
     def test_get_inventory(self):
         """It should Get a single Inventory item"""

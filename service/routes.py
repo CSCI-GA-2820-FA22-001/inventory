@@ -47,7 +47,11 @@ def index():
 def list_inventory():
     """Returns all of the inventory"""
     app.logger.info("Request for inventory list")
-    return {}, status.HTTP_200_OK
+    inventory = Inventory.all()
+    results = [inventory_item.serialize() for inventory_item in inventory]
+    app.logger.info(results)
+
+    return jsonify(results), status.HTTP_200_OK
 
 
 ######################################################################
