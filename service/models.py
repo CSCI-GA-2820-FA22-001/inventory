@@ -19,10 +19,12 @@ def init_db(app):
 
 
 class DataValidationError(Exception):
-    """ Used for an data validation errors when deserializing """
+    """Used for an data validation errors when deserializing"""
+
 
 class Condition(Enum):
     """Enumeration of different product conditions"""
+
     NEW = 0
     USED = 1
     OPEN_BOX = 2
@@ -47,7 +49,15 @@ class Inventory(db.Model):
     restock_level = db.Column(db.Integer)
     available = db.Column(db.Integer)
 
-    def __init__(self, pid: int, condition: Condition, name: str, quantity: int, restock_level: int, available: int):
+    def __init__(
+        self,
+        pid: int,
+        condition: Condition,
+        name: str,
+        quantity: int,
+        restock_level: int,
+        available: int,
+    ):
         """Constructor for Item in Inventory"""
         self.pid = pid
         self.condition = condition
@@ -57,13 +67,28 @@ class Inventory(db.Model):
         self.available = available
 
     def __repr__(self):
-        return "<Inventory Product id=[%s], Condition=[%s], Name=[%s], Quantity=[%s], Restock_level=[%d], Available=[%d]>" % (self.pid, Condition(self.condition), self.name, self.quantity, self.restock_level, self.available)
+        return (
+            "<Inventory Product id=[%s], Condition=[%s], Name=[%s], Quantity=[%s], Restock_level=[%d], Available=[%d]>"
+            % (
+                self.pid,
+                Condition(self.condition),
+                self.name,
+                self.quantity,
+                self.restock_level,
+                self.available,
+            )
+        )
 
     def create(self):
         """
         Creates an Item in the database
         """
-        logger.info("Creating item with pid: %d, name: %s, condition: %s", self.pid, self.name, self.condition)
+        logger.info(
+            "Creating item with pid: %d, name: %s, condition: %s",
+            self.pid,
+            self.name,
+            self.condition,
+        )
         db.session.add(self)
         db.session.commit()
 
@@ -71,20 +96,29 @@ class Inventory(db.Model):
         """
         Updates an Item to the database
         """
-        if(self.pid is None):
-            raise DataValidationError("No ID present for item in update")# Should not update an item with no ID
+        if self.pid is None:
+            raise DataValidationError(
+                "No ID present for item in update"
+            )  # Should not update an item with no ID
         logger.info("Updating %s", self.name)
         db.session.commit()
 
     def delete(self):
-        """ Removes a Inventory from the data store """
+        """Removes a Inventory from the data store"""
         logger.info("Deleting %s", self.name)
         db.session.delete(self)
         db.session.commit()
 
     def serialize(self):
-        """ Serializes a Inventory into a dictionary """
-        return {"pid": self.pid, "condition": self.condition.name, "name": self.name, "quantity": self.quantity, "restock_level": self.restock_level, "available":self.available}
+        """Serializes a Inventory into a dictionary"""
+        return {
+            "pid": self.pid,
+            "condition": self.condition.name,
+            "name": self.name,
+            "quantity": self.quantity,
+            "restock_level": self.restock_level,
+            "available": self.available,
+        }
 
     def deserialize(self, data):
         """
@@ -99,8 +133,7 @@ class Inventory(db.Model):
                 self.quantity = data["quantity"]
             else:
                 raise DataValidationError(
-                    "Invalid type for int [quantity]"
-                    + str(type(data["quantity"]))
+                    "Invalid type for int [quantity]" + str(type(data["quantity"]))
                 )
             if isinstance(data["restock_level"], int):
                 self.restock_level = data["restock_level"]
@@ -113,18 +146,15 @@ class Inventory(db.Model):
                 self.available = data["available"]
             else:
                 raise DataValidationError(
-                    "Invalid type for int [available]"
-                    + str(type(data["available"]))
+                    "Invalid type for int [available]" + str(type(data["available"]))
                 )
         except KeyError as error:
-            raise DataValidationError(
-                "Invalid Inventory: missing " + error.args[0]
-            )
+            raise DataValidationError("Invalid Inventory: missing " + error.args[0])
         return self
 
     @classmethod
     def init_db(cls, app):
-        """ Initializes the database session """
+        """Initializes the database session"""
         logger.info("Initializing database")
         cls.app = app
         # This is where we initialize SQLAlchemy from the Flask app
@@ -134,21 +164,22 @@ class Inventory(db.Model):
 
     @classmethod
     def all(cls):
-        """ Returns all of the Inventory in the database """
+        """Returns all of the Inventory in the database"""
         logger.info("Processing all Inventory")
         return cls.query.all()
 
     @classmethod
     def find(cls, pid):
-        """ Finds a Inventory by it's ID """
+        """Finds a Inventory by it's ID"""
         logger.info("Processing lookup for id %s ...", pid)
         return cls.query.filter(cls.pid == pid)
 
     @classmethod
     def find_by_pid_condition(cls, pid, condition):
-        """ Finds a Inventory by it's ID and condition """
+        """Finds a Inventory by it's ID and condition"""
         logger.info(
-            "Processing lookup for pid %s with condition %s  ...", pid, condition)
+            "Processing lookup for pid %s with condition %s  ...", pid, condition
+        )
         return cls.query.get((pid, condition))
 
     @classmethod

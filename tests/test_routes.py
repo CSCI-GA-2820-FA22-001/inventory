@@ -5,11 +5,10 @@ Test cases can be run with the following:
   nosetests -v --with-spec --spec-color
   coverage report -m
 """
-import json
 import os
 import logging
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+# from unittest.mock import MagicMock, patch
 from service import app
 from service.models import db, init_db, Inventory
 from service.common import status
@@ -21,11 +20,12 @@ DATABASE_URI = os.getenv(
 )
 BASE_URL = "/inventory"
 
+
 ######################################################################
 #  T E S T   I N V E N T O R Y   S E R V I C E
 ######################################################################
 class TestInventoryServer(TestCase):
-    """ REST API Server Tests """
+    """REST API Server Tests"""
 
     @classmethod
     def setUpClass(cls):
@@ -56,7 +56,7 @@ class TestInventoryServer(TestCase):
     ######################################################################
 
     def test_index(self):
-        """ It should call the home page """
+        """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
@@ -86,12 +86,21 @@ class TestInventoryServer(TestCase):
         test_item.create()
         found_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
         self.assertEqual(found_item.pid, test_item.pid)
-        response = self.client.put(f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}", 
-        json={"name":"Test Name","quantity":2,"restock_level":3,"available":4})
+        response = self.client.put(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}",
+            json={
+                "name": "Test Name",
+                "quantity": 2,
+                "restock_level": 3,
+                "available": 4,
+            },
+        )
         # Check if response code is valid
         self.assertEqual(response.status_code, 200)
         # Check if the data is indeed persisted in DB
-        updated_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
+        updated_item = Inventory.find_by_pid_condition(
+            test_item.pid, test_item.condition
+        )
         self.assertEqual(updated_item.pid, test_item.pid)
         self.assertEqual(updated_item.name, "Test Name")
         self.assertEqual(updated_item.quantity, 2)
@@ -104,30 +113,43 @@ class TestInventoryServer(TestCase):
         test_item.create()
         found_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
         self.assertEqual(found_item.pid, test_item.pid)
-        response = self.client.put(f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}", 
-        json={"quantity":2,"restock_level":3,"available":4})
+        response = self.client.put(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}",
+            json={"quantity": 2, "restock_level": 3, "available": 4},
+        )
         # Check if response code is valid
         self.assertEqual(response.status_code, 400)
         # Check if the data has not been persisted
-        updated_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
+        updated_item = Inventory.find_by_pid_condition(
+            test_item.pid, test_item.condition
+        )
         self.assertEqual(updated_item.pid, test_item.pid)
         self.assertEqual(updated_item.name, test_item.name)
         self.assertEqual(updated_item.quantity, test_item.quantity)
         self.assertEqual(updated_item.restock_level, test_item.restock_level)
         self.assertEqual(updated_item.available, test_item.available)
-    
+
     def test_update_inventory_bad_condition_id(self):
         """It should Throw an error for Erroneous Condition ID"""
         test_item = InventoryFactory()
         test_item.create()
         found_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
         self.assertEqual(found_item.pid, test_item.pid)
-        response = self.client.put(f"{BASE_URL}/pid/{test_item.pid}/condition/10", 
-        json={"name":"Test Name","quantity":2,"restock_level":3,"available":4})
+        response = self.client.put(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/10",
+            json={
+                "name": "Test Name",
+                "quantity": 2,
+                "restock_level": 3,
+                "available": 4,
+            },
+        )
         # Check if response code is valid
         self.assertEqual(response.status_code, 400)
         # Check if the data has not been persisted
-        updated_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
+        updated_item = Inventory.find_by_pid_condition(
+            test_item.pid, test_item.condition
+        )
         self.assertEqual(updated_item.pid, test_item.pid)
         self.assertEqual(updated_item.name, test_item.name)
         self.assertEqual(updated_item.quantity, test_item.quantity)
@@ -136,47 +158,70 @@ class TestInventoryServer(TestCase):
 
     def test_update_inventory_no_item_present(self):
         """It should Throw an error for Invalid Combination of (PID, Condition ID)"""
-        test_item = InventoryFactory() # do not create this
-        response = self.client.put(f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}", 
-        json={"name":"Test Name","quantity":2,"restock_level":3,"available":4})
+        test_item = InventoryFactory()  # do not create this
+        response = self.client.put(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}",
+            json={
+                "name": "Test Name",
+                "quantity": 2,
+                "restock_level": 3,
+                "available": 4,
+            },
+        )
         # Check if response code is valid
         self.assertEqual(response.status_code, 404)
         # Check if the data has not been persisted
-        updated_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
+        updated_item = Inventory.find_by_pid_condition(
+            test_item.pid, test_item.condition
+        )
         self.assertEqual(updated_item, None)
 
     def test_update_inventory_invalid_content_type(self):
         """It should Throw an error for Invalid Content Type"""
         test_item = InventoryFactory()
-        headers = {'content-type': 'xml'}
-        response = self.client.put(f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}", 
-        headers = headers)
+        headers = {"content-type": "xml"}
+        response = self.client.put(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}",
+            headers=headers,
+        )
         # Check if response code is valid
         self.assertEqual(response.status_code, 415)
         # Check if the data has not been persisted
-        updated_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
+        updated_item = Inventory.find_by_pid_condition(
+            test_item.pid, test_item.condition
+        )
         self.assertEqual(updated_item, None)
-    
+
     def test_update_inventory_no_content_type(self):
         """It should Throw an error for No Content Type"""
         test_item = InventoryFactory()
         headers = {}
-        response = self.client.put(f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}", 
-        headers = headers)
+        response = self.client.put(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}",
+            headers=headers,
+        )
         # Check if response code is valid
         self.assertEqual(response.status_code, 415)
         # Check if the data has not been persisted
-        updated_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
+        updated_item = Inventory.find_by_pid_condition(
+            test_item.pid, test_item.condition
+        )
         self.assertEqual(updated_item, None)
-
 
     def test_delete_inventory(self):
         """It should Delete a Inventory item"""
         test_item = InventoryFactory()
         test_item.create()
-        self.assertEqual(Inventory.find_by_pid_condition(test_item.pid, test_item.condition), test_item)
-        
-        response = self.client.delete(f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}")
+        self.assertEqual(
+            Inventory.find_by_pid_condition(test_item.pid, test_item.condition),
+            test_item,
+        )
+
+        response = self.client.delete(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}"
+        )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        self.assertEqual(Inventory.find_by_pid_condition(test_item.pid, test_item.condition), None)
+        self.assertEqual(
+            Inventory.find_by_pid_condition(test_item.pid, test_item.condition), None
+        )
