@@ -4,9 +4,7 @@ My Service
 Describe what your service does here
 """
 
-from urllib import response
-from flask import Flask, jsonify, request, url_for, make_response, abort
-import json
+from flask import jsonify, request, abort
 from .common import status  # HTTP Status Codes
 from service.models import DataValidationError, Inventory, Condition
 
@@ -19,8 +17,8 @@ from . import app
 ######################################################################
 @app.route("/")
 def index():
-    """ 
-    Root URL response 
+    """
+    Root URL response
     This sends a basic list of endpoints available from the Flask App
     """
     routes = {}
@@ -29,13 +27,9 @@ def index():
         routes[r.rule]["functionName"] = r.endpoint
         routes[r.rule]["methods"] = list(r.methods)
     routes.pop("/static/<path:filename>")
-    
+
     return (
-        jsonify(
-            name="Inventory Service REST API",
-            version="1.0",
-            paths=routes
-        ),
+        jsonify(name="Inventory Service REST API", version="1.0", paths=routes),
         status.HTTP_200_OK,
     )
 
@@ -91,7 +85,11 @@ def update_inventory(pid, condition_id):
 
     This endpoint will update an inventory item based the body that is posted
     """
-    app.logger.info("Request to update inventory item with id: %s and condition id", pid, condition_id)
+    app.logger.info(
+        "Request to update inventory item with id: %s and condition id",
+        pid,
+        condition_id,
+    )
     check_content_type("application/json")
     if Condition.has_value(condition_id) is False:
         app.logger.info("Condition %s not in value map", condition_id)
@@ -99,8 +97,11 @@ def update_inventory(pid, condition_id):
 
     item = Inventory.find_by_pid_condition(pid=pid, condition=Condition(condition_id))
     if item is None:
-        abort(status.HTTP_404_NOT_FOUND, f"Item with Product ID '{pid}' and Condition '{Condition(condition_id)}' not found")
-    
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Item with Product ID '{pid}' and Condition '{Condition(condition_id)}' not found",
+        )
+
     try:
         item.deserialize(request.get_json())
         item.pid = pid
@@ -108,7 +109,7 @@ def update_inventory(pid, condition_id):
         item.update()
     except DataValidationError as err:
         abort(status.HTTP_400_BAD_REQUEST, err)
-    
+
     return item.serialize(), status.HTTP_200_OK
 
 
@@ -122,12 +123,20 @@ def delete_inventory(pid, condition):
 
     This endpoint will delete an inventory item based the id specified in the path
     """
-    if(Condition.has_value(condition) is True):
-        app.logger.info("Request to delete inventory item with pid: %s and condition: %s", pid, Condition(condition))
+    if Condition.has_value(condition) is True:
+        app.logger.info(
+            "Request to delete inventory item with pid: %s and condition: %s",
+            pid,
+            Condition(condition),
+        )
         item = Inventory.find_by_pid_condition(pid, Condition(condition))
         if item:
             item.delete()
-        app.logger.info("Inventory item with pid: %s and condition: %s successfully deleted", pid, Condition(condition))
+        app.logger.info(
+            "Inventory item with pid: %s and condition: %s successfully deleted",
+            pid,
+            Condition(condition),
+        )
     return "", status.HTTP_204_NO_CONTENT
 
 
@@ -137,9 +146,10 @@ def delete_inventory(pid, condition):
 
 
 def init_db():
-    """ Initializes the SQLAlchemy app """
+    """Initializes the SQLAlchemy app"""
     global app
     Inventory.init_db(app)
+
 
 def check_content_type(content_type):
     """Checks that the media type is correct"""

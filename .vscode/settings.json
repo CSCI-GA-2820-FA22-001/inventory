@@ -2,6 +2,7 @@
     "makefile.extensionOutputFolder": "./.vscode",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
     "python.testing.nosetestsEnabled": true,
     "python.testing.nosetestArgs": ["-c=setup.cfg"],
     "python.testing.pytestEnabled": false,

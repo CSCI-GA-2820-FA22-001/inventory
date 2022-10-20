@@ -2,7 +2,6 @@
 Test cases for Inventory Model
 
 """
-from cmath import pi
 import os
 import logging
 import unittest
@@ -14,15 +13,16 @@ DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
 )
 
+
 ######################################################################
 #  INVENTORY   M O D E L   T E S T   C A S E S
 ######################################################################
 class TestInventory(unittest.TestCase):
-    """ Test Cases for Inventory Model """
+    """Test Cases for Inventory Model"""
 
     @classmethod
     def setUpClass(cls):
-        """ This runs once before the entire test suite """
+        """This runs once before the entire test suite"""
         app.config["TESTING"] = True
         app.config["DEBUG"] = False
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
@@ -31,16 +31,16 @@ class TestInventory(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """ This runs once after the entire test suite """
+        """This runs once after the entire test suite"""
         db.session.close()
 
     def setUp(self):
-        """ This runs before each test """
+        """This runs before each test"""
         db.session.query(Inventory).delete()
         db.session.commit()
 
     def tearDown(self):
-        """ This runs after each test """
+        """This runs after each test"""
         db.session.remove()
 
     ######################################################################
@@ -49,11 +49,18 @@ class TestInventory(unittest.TestCase):
 
     def test_create_an_item(self):
         """It should Create an item and assert that it exists"""
-        item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
+        item = Inventory(
+            pid=1,
+            condition=Condition.NEW,
+            name="Test",
+            quantity=1,
+            restock_level=2,
+            available=3,
+        )
         self.assertTrue(item is not None)
         self.assertEqual(item.pid, 1)
         self.assertEqual(item.condition, Condition.NEW)
-        self.assertEqual(item.name, 'Test')
+        self.assertEqual(item.name, "Test")
         self.assertEqual(item.quantity, 1)
         self.assertEqual(item.restock_level, 2)
         self.assertEqual(item.available, 3)
@@ -62,7 +69,14 @@ class TestInventory(unittest.TestCase):
         """It should Create an item and add it to the database"""
         items = Inventory.all()
         self.assertEqual(items, [])
-        item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
+        item = Inventory(
+            pid=1,
+            condition=Condition.NEW,
+            name="Test",
+            quantity=1,
+            restock_level=2,
+            available=3,
+        )
         self.assertTrue(item is not None)
         self.assertEqual(item.pid, 1)
         item.create()
@@ -78,7 +92,9 @@ class TestInventory(unittest.TestCase):
         item.create()
         self.assertIsNotNone(item.pid)
         # Fetch it back
-        found_item = Inventory.find_by_pid_condition(pid=item.pid, condition=item.condition)
+        found_item = Inventory.find_by_pid_condition(
+            pid=item.pid, condition=item.condition
+        )
         self.assertEqual(found_item.pid, item.pid)
         self.assertEqual(found_item.condition, item.condition)
         self.assertEqual(found_item.name, item.name)
@@ -147,11 +163,17 @@ class TestInventory(unittest.TestCase):
         self.assertIn("available", data)
         self.assertEqual(data["available"], item.available)
 
-
     def test_deserialize_an_item(self):
         """It should de-serialize an Item"""
         data = InventoryFactory().serialize()
-        item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
+        item = Inventory(
+            pid=1,
+            condition=Condition.NEW,
+            name="Test",
+            quantity=1,
+            restock_level=2,
+            available=3,
+        )
         item.deserialize(data)
         self.assertNotEqual(item, None)
         self.assertEqual(item.pid, 1)
@@ -163,7 +185,14 @@ class TestInventory(unittest.TestCase):
     def test_deserialize_missing_data(self):
         """It should not deserialize an Item with missing data"""
         data = {"id": 1, "name": "Test Name"}
-        item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
+        item = Inventory(
+            pid=1,
+            condition=Condition.NEW,
+            name="Test",
+            quantity=1,
+            restock_level=2,
+            available=3,
+        )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_bad_quantity(self):
@@ -171,15 +200,29 @@ class TestInventory(unittest.TestCase):
         test_item = InventoryFactory()
         data = test_item.serialize()
         data["quantity"] = "true"
-        item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
+        item = Inventory(
+            pid=1,
+            condition=Condition.NEW,
+            name="Test",
+            quantity=1,
+            restock_level=2,
+            available=3,
+        )
         self.assertRaises(DataValidationError, item.deserialize, data)
-    
+
     def test_deserialize_bad_restock_level(self):
         """It should not deserialize a bad available attribute"""
         test_item = InventoryFactory()
         data = test_item.serialize()
         data["restock_level"] = "true"
-        item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
+        item = Inventory(
+            pid=1,
+            condition=Condition.NEW,
+            name="Test",
+            quantity=1,
+            restock_level=2,
+            available=3,
+        )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_bad_available(self):
@@ -187,7 +230,14 @@ class TestInventory(unittest.TestCase):
         test_item = InventoryFactory()
         data = test_item.serialize()
         data["available"] = "true"
-        item = Inventory(pid=1, condition=Condition.NEW, name='Test', quantity=1, restock_level=2, available=3)
+        item = Inventory(
+            pid=1,
+            condition=Condition.NEW,
+            name="Test",
+            quantity=1,
+            restock_level=2,
+            available=3,
+        )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_find_item_pid_condition(self):
