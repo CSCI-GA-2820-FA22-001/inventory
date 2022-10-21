@@ -87,7 +87,7 @@ class Inventory(db.Model):
             "Creating item with pid: %d, name: %s, condition: %s",
             self.pid,
             self.name,
-            self.condition,
+            Condition(self.condition)
         )
         db.session.add(self)
         db.session.commit()
@@ -113,7 +113,7 @@ class Inventory(db.Model):
         """Serializes a Inventory into a dictionary"""
         return {
             "pid": self.pid,
-            "condition": self.condition.name,
+            "condition": self.condition.value,
             "name": self.name,
             "quantity": self.quantity,
             "restock_level": self.restock_level,

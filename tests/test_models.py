@@ -153,7 +153,7 @@ class TestInventory(unittest.TestCase):
         self.assertIn("pid", data)
         self.assertEqual(data["pid"], item.pid)
         self.assertIn("condition", data)
-        self.assertEqual(data["condition"], item.condition.name)
+        self.assertEqual(data["condition"], item.condition.value)
         self.assertIn("name", data)
         self.assertEqual(data["name"], item.name)
         self.assertIn("quantity", data)

@@ -5,12 +5,12 @@ Describe what your service does here
 """
 
 from flask import jsonify, request, abort
-from .common import status  # HTTP Status Codes
 from service.models import DataValidationError, Inventory, Condition
+from .common import status  # HTTP Status Codes
+
 
 # Import Flask application
 from . import app
-
 
 ######################################################################
 # GET INDEX
@@ -80,8 +80,62 @@ def create_inventory():
     Creates an inventory item
     This endpoint will create an inventory item based the data in the body that is posted
     """
-    app.logger.info("Request to create an inventory item")
-    return {}, status.HTTP_201_CREATED, {"Location": "location_url"}
+
+    check_content_type("application/json")
+
+    app.logger.info("Request to create inventory item ")
+
+    payload = request.get_json()
+
+    try:
+        pid = payload["pid"]
+    except KeyError:
+        app.logger.info("Payload has missing pid")
+        abort(status.HTTP_400_BAD_REQUEST, "Missing pid")
+    try:
+        condition_id = payload["condition"]
+    except KeyError:
+        app.logger.info("Payload has missing condition id")
+        abort(status.HTTP_400_BAD_REQUEST, "Missing condition id")
+    try:
+        name = payload["name"]
+    except KeyError:
+        app.logger.info("Payload has missing name")
+        abort(status.HTTP_400_BAD_REQUEST, "Missing name")
+
+    app.logger.info(
+        "Request details are id: %d and condition id %d and name %s",
+        pid,
+        condition_id,
+        name
+    )
+
+   
+    if Condition.has_value(condition_id) is False :
+        app.logger.info("Condition %d not in value map", condition_id)
+        abort(status.HTTP_400_BAD_REQUEST, "Condition id not supported")
+
+    if not type(pid) is int:
+        app.logger.info("Product id %d is not an integer", pid)
+        abort(status.HTTP_400_BAD_REQUEST, "Product id not supported")
+
+    
+    item = Inventory.find_by_pid_condition(pid=pid, condition=Condition(condition_id))
+
+    if item is not None:
+        abort(
+            status.HTTP_409_CONFLICT,
+            f"Item with Product ID '{pid}' and Condition '{Condition(condition_id)}' already exists",
+        )
+
+    item = Inventory(pid, Condition(condition_id), name, None, None, None)
+
+    
+    item.deserialize(request.get_json())
+    item.create()
+    
+
+    return item.serialize(), status.HTTP_201_CREATED
 
 
 ######################################################################
