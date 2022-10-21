@@ -128,7 +128,12 @@ class Inventory(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.name = data["name"]
+            if(isinstance(data["name"], str)):
+                self.name = data["name"]
+            else:
+                raise DataValidationError(
+                    "Invalid type for string [name]" + str(type(data["name"]))
+                )
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
             else:

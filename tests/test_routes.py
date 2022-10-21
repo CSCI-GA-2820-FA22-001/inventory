@@ -97,7 +97,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-    def test_create_inventory(self):
+    def test_create_inventory_happy_path(self):
         """It should Create a new Inventory item"""
         test_item = InventoryFactory()
         logging.debug("Test Item: %s", test_item.serialize())
@@ -186,7 +186,7 @@ class TestInventoryServer(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_create_inventory_invalid_condition(self):
+    def test_create_inventory_invalid_condition_type(self):
         """It should test the create case where condition is invalid"""
         
         response = self.client.post(
@@ -202,13 +202,77 @@ class TestInventoryServer(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_create_inventory_invalid_condition_int(self):
+        """It should test the create case where condition is invalid"""
+        
+        response = self.client.post(
+            f"{BASE_URL}",
+            json={
+                "pid" : 0,
+                "condition": 10,
+                "quantity": 2,
+                "restock_level": 3,
+                "available": 4,
+                "name" : "testing"
+            }
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_create_inventory_duplicate_time(self):
         """It should test the case where the item is already in the database"""
         test_item = InventoryFactory()
         test_item.create()
         response = self.client.post(BASE_URL, json=test_item.serialize())
         self.assertEqual(response.status_code, 409)
+    
+    def test_update_inventory_happy_path(self):
+        """It should Update an existing Inventory item"""
+        test_item = InventoryFactory()
+        test_item.create()
+        found_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
+        self.assertEqual(found_item.pid, test_item.pid)
+        response = self.client.put(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}",
+            json={
+                "name": "Test Name",
+                "quantity": 2,
+                "restock_level": 3,
+                "available": 4,
+            },
+        )
+        # Check if response code is valid
+        self.assertEqual(response.status_code, 200)
+        # Check if the data is indeed persisted in DB
+        updated_item = Inventory.find_by_pid_condition(
+            test_item.pid, test_item.condition
+        )
+        self.assertEqual(updated_item.pid, test_item.pid)
+        self.assertEqual(updated_item.name, "Test Name")
+        self.assertEqual(updated_item.quantity, 2)
+        self.assertEqual(updated_item.restock_level, 3)
+        self.assertEqual(updated_item.available, 4)
 
+    def test_update_inventory_missing_value(self):
+        """It should Throw an error for Missing Value"""
+        test_item = InventoryFactory()
+        test_item.create()
+        found_item = Inventory.find_by_pid_condition(test_item.pid, test_item.condition)
+        self.assertEqual(found_item.pid, test_item.pid)
+        response = self.client.put(
+            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}",
+            json={"quantity": 2, "restock_level": 3, "available": 4},
+        )
+        # Check if response code is valid
+        self.assertEqual(response.status_code, 400)
+        # Check if the data has not been persisted
+        updated_item = Inventory.find_by_pid_condition(
+            test_item.pid, test_item.condition
+        )
+        self.assertEqual(updated_item.pid, test_item.pid)
+        self.assertEqual(updated_item.name, test_item.name)
+        self.assertEqual(updated_item.quantity, test_item.quantity)
+        self.assertEqual(updated_item.restock_level, test_item.restock_level)
+        self.assertEqual(updated_item.available, test_item.available)
 
     def test_update_inventory_bad_condition_id(self):
         """It should Throw an error for Erroneous Condition ID"""

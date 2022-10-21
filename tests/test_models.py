@@ -195,8 +195,23 @@ class TestInventory(unittest.TestCase):
         )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
+    def test_deserialize_bad_name(self):
+        """It should not deserialize a bad Name attribute"""
+        test_item = InventoryFactory()
+        data = test_item.serialize()
+        data["name"] = True
+        item = Inventory(
+            pid=1,
+            condition=Condition.NEW,
+            name="Test",
+            quantity=1,
+            restock_level=2,
+            available=3,
+        )
+        self.assertRaises(DataValidationError, item.deserialize, data)
+
     def test_deserialize_bad_quantity(self):
-        """It should not deserialize a bad available attribute"""
+        """It should not deserialize a bad Quantity attribute"""
         test_item = InventoryFactory()
         data = test_item.serialize()
         data["quantity"] = "true"
@@ -211,7 +226,7 @@ class TestInventory(unittest.TestCase):
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_bad_restock_level(self):
-        """It should not deserialize a bad available attribute"""
+        """It should not deserialize a bad Restock Level attribute"""
         test_item = InventoryFactory()
         data = test_item.serialize()
         data["restock_level"] = "true"

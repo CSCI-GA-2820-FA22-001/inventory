@@ -80,46 +80,33 @@ def create_inventory():
     Creates an inventory item
     This endpoint will create an inventory item based the data in the body that is posted
     """
-
     check_content_type("application/json")
-
-    app.logger.info("Request to create inventory item ")
-
+    app.logger.info("Request to create inventory item")
     payload = request.get_json()
-
     try:
         pid = payload["pid"]
     except KeyError:
         app.logger.info("Payload has missing pid")
-        abort(status.HTTP_400_BAD_REQUEST, "Missing pid")
+        abort(status.HTTP_400_BAD_REQUEST, "Missing pid in request")
     try:
         condition_id = payload["condition"]
     except KeyError:
         app.logger.info("Payload has missing condition id")
-        abort(status.HTTP_400_BAD_REQUEST, "Missing condition id")
-    try:
-        name = payload["name"]
-    except KeyError:
-        app.logger.info("Payload has missing name")
-        abort(status.HTTP_400_BAD_REQUEST, "Missing name")
+        abort(status.HTTP_400_BAD_REQUEST, "Missing condition id in request")
 
     app.logger.info(
-        "Request details are id: %d and condition id %d and name %s",
+        "Request details are id: %s and condition id %s",
         pid,
         condition_id,
-        name
     )
-
-   
+    # Check if Condition ID is in range of values, or if PID is integer or not
     if Condition.has_value(condition_id) is False :
         app.logger.info("Condition %d not in value map", condition_id)
         abort(status.HTTP_400_BAD_REQUEST, "Condition id not supported")
-
-    if not type(pid) is int:
+    if not isinstance(pid, int):
         app.logger.info("Product id %d is not an integer", pid)
         abort(status.HTTP_400_BAD_REQUEST, "Product id not supported")
 
-    
     item = Inventory.find_by_pid_condition(pid=pid, condition=Condition(condition_id))
 
     if item is not None:
@@ -128,12 +115,12 @@ def create_inventory():
             f"Item with Product ID '{pid}' and Condition '{Condition(condition_id)}' already exists",
         )
 
-    item = Inventory(pid, Condition(condition_id), name, None, None, None)
-
-    
-    item.deserialize(request.get_json())
-    item.create()
-    
+    try:
+        item = Inventory(pid, Condition(condition_id),None, None, None, None)
+        item.deserialize(request.get_json())
+        item.create()
+    except DataValidationError as err:
+        abort(status.HTTP_400_BAD_REQUEST, err)
 
     return item.serialize(), status.HTTP_201_CREATED
 
