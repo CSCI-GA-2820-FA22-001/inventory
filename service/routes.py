@@ -101,20 +101,17 @@ def create_inventory():
         name
     )
 
-    # NEEDS TO BE FIXED
-    if Condition.has_value(condition_id) is False and isinstance(condition_id) is int:
+   
+    if Condition.has_value(condition_id) is False :
         app.logger.info("Condition %d not in value map", condition_id)
         abort(status.HTTP_400_BAD_REQUEST, "Condition id not supported")
 
-    if not isinstance(pid) is int:
+    if not type(pid) is int:
         app.logger.info("Product id %d is not an integer", pid)
         abort(status.HTTP_400_BAD_REQUEST, "Product id not supported")
 
-    # NEEDS TO BE FIXED
-    if (isinstance(condition_id) is int):
-        item = Inventory.find_by_pid_condition(pid=pid, condition=Condition(condition_id))
-    else:
-        item = Inventory.find_by_pid_condition(pid=pid, condition=condition_id)
+    
+    item = Inventory.find_by_pid_condition(pid=pid, condition=Condition(condition_id))
 
     if item is not None:
         abort(
@@ -124,11 +121,10 @@ def create_inventory():
 
     item = Inventory(pid, Condition(condition_id), name, None, None, None)
 
-    try:
-        item.deserialize(request.get_json())
-        item.create()
-    except DataValidationError as err:
-        abort(status.HTTP_400_BAD_REQUEST, err)
+    
+    item.deserialize(request.get_json())
+    item.create()
+    
 
     return item.serialize(), status.HTTP_201_CREATED
 
