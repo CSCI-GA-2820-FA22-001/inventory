@@ -51,15 +51,21 @@ def list_inventory():
 ######################################################################
 # RETRIEVE AN INVENTORY ITEM
 ######################################################################
-@app.route("/inventory/<int:item_id>", methods=["GET"])
-def get_inventory(item_id):
+@app.route("/inventory/pid/<int:pid>/condition/<int:condition_id>", methods=["GET"])
+def get_inventory(pid, condition_id):
     """
     Retrieve a single inventory item
 
     This endpoint will return an inventory item based on it's id
     """
-    app.logger.info("Request for inventory item with id: %s", item_id)
-    return {}, status.HTTP_200_OK
+
+    app.logger.info("Request for inventory item with id: %s", pid)
+    inventory = Inventory.find_by_pid_condition(pid, Condition(condition_id))
+    if not inventory:
+        abort(status.HTTP_404_NOT_FOUND, f"Inventory with id '{pid}' was not found.")
+
+    app.logger.info("Returning inventory: %s", inventory.pid)
+    return jsonify(inventory.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
