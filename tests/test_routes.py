@@ -10,7 +10,7 @@ import logging
 from unittest import TestCase
 # from unittest.mock import MagicMock, patch
 from service import app
-from service.models import db, init_db, Inventory
+from service.models import db, init_db, Inventory, Condition
 from service.common import status
 from tests.factories import InventoryFactory  # HTTP Status Codes
 
@@ -81,6 +81,7 @@ class TestInventoryServer(TestCase):
         test_item.create()
         logging.debug("Test Item: %s", test_item.serialize())
         response = self.client.post(BASE_URL, json=test_item.serialize())
+        logging.debug("response: %s", response.text)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
          # Make sure location header is set
@@ -90,7 +91,7 @@ class TestInventoryServer(TestCase):
         # Check the data is correct
         new_item = response.get_json()
         self.assertEqual(new_item["name"], test_item.name)
-        self.assertEqual(new_item["condition_id"], test_item.condition_id)
+        self.assertEqual(new_item["condition_id"], Condition(test_item.condition_id))
         self.assertEqual(new_item["pid"], test_item.pid)
         self.assertEqual(new_item["quantity"], test_item.quantity)
         self.assertEqual(new_item["restock_level"], test_item.restock_level)
@@ -101,7 +102,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         new_item = response.get_json()
         self.assertEqual(new_item["name"], test_item.name)
-        self.assertEqual(new_item["condition_id"], test_item.condition_id)
+        self.assertEqual(new_item["condition_id"], Condition(test_item.condition_id))
         self.assertEqual(new_item["pid"], test_item.pid)
         self.assertEqual(new_item["quantity"], test_item.quantity)
         self.assertEqual(new_item["restock_level"], test_item.restock_level)

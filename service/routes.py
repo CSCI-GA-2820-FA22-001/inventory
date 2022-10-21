@@ -12,7 +12,6 @@ from .common import status  # HTTP Status Codes
 # Import Flask application
 from . import app
 
-
 ######################################################################
 # GET INDEX
 ######################################################################
@@ -66,7 +65,7 @@ def get_inventory(item_id):
 ######################################################################
 # ADD A NEW INVENTORY ITEM
 ######################################################################
-@app.route("/inventory/", methods=["POST"])
+@app.route("/inventory", methods=["POST"])
 def create_inventory():
     """
     Creates an inventory item
@@ -81,28 +80,42 @@ def create_inventory():
 
     try:
         pid = payload["pid"]
-        condition_id = payload["condition_id"]
+    except KeyError:
+        app.logger.info("Payload has missing pid")
+        abort(status.HTTP_400_BAD_REQUEST, "Missing pid")
+    try:
+        condition_id = payload["condition"]
+    except KeyError:
+        app.logger.info("Payload has missing condition id")
+        abort(status.HTTP_400_BAD_REQUEST, "Missing condition id")
+    try:
         name = payload["name"]
     except KeyError:
-        app.logger.info("Payload has missing pid condition id or name")
-        abort(status.HTTP_400_BAD_REQUEST, "Insuffcient data")
+        app.logger.info("Payload has missing name")
+        abort(status.HTTP_400_BAD_REQUEST, "Missing name")
 
     app.logger.info(
         "Request details are id: %d and condition id %d and name %s",
         pid,
         condition_id,
-        name,
+        name
     )
 
-    if Condition.has_value(condition_id) is False:
-        app.logger.info("Condition %s not in value map", condition_id)
+    # NEEDS TO BE FIXED
+    if Condition.has_value(condition_id) is False and isinstance(condition_id) is int:
+        app.logger.info("Condition %d not in value map", condition_id)
         abort(status.HTTP_400_BAD_REQUEST, "Condition id not supported")
 
-    if type(pid) is not int:
-        app.logger.info("Product id is not an integer", condition_id)
+    if not isinstance(pid) is int:
+        app.logger.info("Product id %d is not an integer", pid)
         abort(status.HTTP_400_BAD_REQUEST, "Product id not supported")
 
-    item = Inventory.find_by_pid_condition(pid=pid, condition=Condition(condition_id))
+    # NEEDS TO BE FIXED
+    if (isinstance(condition_id) is int):
+        item = Inventory.find_by_pid_condition(pid=pid, condition=Condition(condition_id))
+    else:
+        item = Inventory.find_by_pid_condition(pid=pid, condition=condition_id)
+
     if item is not None:
         abort(
             status.HTTP_409_CONFLICT,
