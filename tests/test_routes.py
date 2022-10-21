@@ -80,7 +80,21 @@ class TestInventoryServer(TestCase):
         data = response.get_json()
         self.assertEqual(data["name"], test_inventory.name)
 
+    def test_get_inventory_invalid_condition_id(self):
+        """It should return an invalid Condition ID error for Get Inventory"""
 
+        test_inventory = InventoryFactory()
+        test_inventory.create()
+        response = self.client.get(f"{BASE_URL}/pid/{test_inventory.pid}/condition/10")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_inventory_invalid_pid_condition_id(self):
+        """It should return an 404 Not Found on Get Inventory"""
+
+        test_inventory = InventoryFactory()
+        test_inventory.create()
+        response = self.client.get(f"{BASE_URL}/pid/{test_inventory.pid + 1}/condition/{test_inventory.condition.value}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
     def test_create_inventory(self):

@@ -59,10 +59,13 @@ def get_inventory(pid, condition_id):
     This endpoint will return an inventory item based on it's id
     """
 
-    app.logger.info("Request for inventory item with id: %s", pid)
+    app.logger.info("Request for inventory item with id: %s and condition %s", pid, condition_id)
+    if Condition.has_value(condition_id) is False:
+        app.logger.info("Condition %s not in value map", condition_id)
+        abort(status.HTTP_400_BAD_REQUEST, "Condition id not supported")
     inventory = Inventory.find_by_pid_condition(pid, Condition(condition_id))
     if not inventory:
-        abort(status.HTTP_404_NOT_FOUND, f"Inventory with id '{pid}' was not found.")
+        abort(status.HTTP_404_NOT_FOUND, f"Inventory with id '{pid}' and condition '{Condition(condition_id)}' was not found.")
 
     app.logger.info("Returning inventory: %s", inventory.pid)
     return jsonify(inventory.serialize()), status.HTTP_200_OK
