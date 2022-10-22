@@ -87,7 +87,7 @@ class Inventory(db.Model):
             "Creating item with pid: %d, name: %s, condition: %s",
             self.pid,
             self.name,
-            self.condition,
+            Condition(self.condition)
         )
         db.session.add(self)
         db.session.commit()
@@ -113,7 +113,7 @@ class Inventory(db.Model):
         """Serializes a Inventory into a dictionary"""
         return {
             "pid": self.pid,
-            "condition": self.condition.name,
+            "condition": self.condition.value,
             "name": self.name,
             "quantity": self.quantity,
             "restock_level": self.restock_level,
@@ -128,7 +128,12 @@ class Inventory(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.name = data["name"]
+            if(isinstance(data["name"], str)):
+                self.name = data["name"]
+            else:
+                raise DataValidationError(
+                    "Invalid type for string [name]" + str(type(data["name"]))
+                )
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
             else:
