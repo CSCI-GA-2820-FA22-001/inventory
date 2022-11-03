@@ -6,7 +6,7 @@ import os
 import logging
 import unittest
 from service import app
-from service.models import Inventory, DataValidationError, db, Condition
+from service.models import Inventory, DataValidationError, db, Condition, Active
 from tests.factories import InventoryFactory
 
 DATABASE_URI = os.getenv(
@@ -55,7 +55,7 @@ class TestInventory(unittest.TestCase):
             name="Test",
             quantity=1,
             restock_level=2,
-            available=3,
+            active=Active.ACTIVE,
         )
         self.assertTrue(item is not None)
         self.assertEqual(item.pid, 1)
@@ -63,7 +63,7 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(item.name, "Test")
         self.assertEqual(item.quantity, 1)
         self.assertEqual(item.restock_level, 2)
-        self.assertEqual(item.available, 3)
+        self.assertEqual(item.active, Active.ACTIVE)
 
     def test_add_an_item(self):
         """It should Create an item and add it to the database"""
@@ -75,7 +75,7 @@ class TestInventory(unittest.TestCase):
             name="Test",
             quantity=1,
             restock_level=2,
-            available=3,
+            active=Active.ACTIVE,
         )
         self.assertTrue(item is not None)
         self.assertEqual(item.pid, 1)
@@ -160,8 +160,8 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(data["quantity"], item.quantity)
         self.assertIn("restock_level", data)
         self.assertEqual(data["restock_level"], item.restock_level)
-        self.assertIn("available", data)
-        self.assertEqual(data["available"], item.available)
+        self.assertIn("active", data)
+        self.assertEqual(data["active"], item.active.value)
 
     def test_deserialize_an_item(self):
         """It should de-serialize an Item"""
@@ -172,7 +172,7 @@ class TestInventory(unittest.TestCase):
             name="Test",
             quantity=1,
             restock_level=2,
-            available=3,
+            active=Active.ACTIVE,
         )
         item.deserialize(data)
         self.assertNotEqual(item, None)
@@ -180,7 +180,7 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(item.name, data["name"])
         self.assertEqual(item.quantity, data["quantity"])
         self.assertEqual(item.restock_level, data["restock_level"])
-        self.assertEqual(item.available, data["available"])
+        self.assertEqual(item.active.value, data["active"])
 
     def test_deserialize_missing_data(self):
         """It should not deserialize an Item with missing data"""
@@ -191,7 +191,7 @@ class TestInventory(unittest.TestCase):
             name="Test",
             quantity=1,
             restock_level=2,
-            available=3,
+            active=Active.ACTIVE,
         )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
@@ -206,7 +206,7 @@ class TestInventory(unittest.TestCase):
             name="Test",
             quantity=1,
             restock_level=2,
-            available=3,
+            active=Active.ACTIVE,
         )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
@@ -221,7 +221,7 @@ class TestInventory(unittest.TestCase):
             name="Test",
             quantity=1,
             restock_level=2,
-            available=3,
+            active=Active.ACTIVE,
         )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
@@ -236,22 +236,22 @@ class TestInventory(unittest.TestCase):
             name="Test",
             quantity=1,
             restock_level=2,
-            available=3,
+            active=Active.ACTIVE,
         )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
-    def test_deserialize_bad_available(self):
-        """It should not deserialize a bad available attribute"""
+    def test_deserialize_bad_active(self):
+        """It should not deserialize a bad active attribute"""
         test_item = InventoryFactory()
         data = test_item.serialize()
-        data["available"] = "true"
+        data["active"] = "abc"
         item = Inventory(
             pid=1,
             condition=Condition.NEW,
             name="Test",
             quantity=1,
             restock_level=2,
-            available=3,
+            active=Active.ACTIVE,
         )
         self.assertRaises(DataValidationError, item.deserialize, data)
 
@@ -291,3 +291,8 @@ class TestInventory(unittest.TestCase):
         found = Inventory.find(pid)
         self.assertEqual(found.count(), 1)
         self.assertEqual(found[0].pid, items[0].pid)
+
+    def test_active_has_value(self):
+        """Test Active Has Value Function"""
+        self.assertTrue(Active.has_value(Active.ACTIVE.value))
+        self.assertFalse(Active.has_value(10))
