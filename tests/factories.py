@@ -3,7 +3,7 @@ Test Factory to make fake objects for testing
 """
 import factory
 from factory.fuzzy import FuzzyInteger, FuzzyText, FuzzyChoice
-from service.models import Inventory, Condition
+from service.models import Inventory, Condition, Active
 
 
 class InventoryFactory(factory.Factory):
@@ -19,4 +19,4 @@ class InventoryFactory(factory.Factory):
     name = FuzzyText(length=10)
     quantity = FuzzyInteger(1, 100)
     restock_level = FuzzyInteger(1, 100)
-    available = FuzzyInteger(1, 100)
+    active = FuzzyChoice(choices=[Active.ACTIVE, Active.INACTIVE])

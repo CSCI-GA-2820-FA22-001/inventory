@@ -112,7 +112,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(new_item["pid"], test_item.pid)
         self.assertEqual(new_item["quantity"], test_item.quantity)
         self.assertEqual(new_item["restock_level"], test_item.restock_level)
-        self.assertEqual(new_item["available"], test_item.available)
+        self.assertEqual(new_item["active"], test_item.active.value)
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         new_item = response.get_json()
@@ -121,7 +121,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(new_item["pid"], test_item.pid)
         self.assertEqual(new_item["quantity"], test_item.quantity)
         self.assertEqual(new_item["restock_level"], test_item.restock_level)
-        self.assertEqual(new_item["available"], test_item.available)
+        self.assertEqual(new_item["active"], test_item.active.value)
 
     
     def test_create_inventory_missing_pid(self):
@@ -134,7 +134,7 @@ class TestInventoryServer(TestCase):
                 "name": "Test Name",
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4
+                "active": 0
             }
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -149,7 +149,7 @@ class TestInventoryServer(TestCase):
                 "name": "Test Name",
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4
+                "active": 0
             }
         )
         self.assertEqual(response.status_code, 400)
@@ -164,7 +164,7 @@ class TestInventoryServer(TestCase):
                 "condition": 0,
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4
+                "active": 0
             }
         )
         self.assertEqual(response.status_code, 400)
@@ -180,7 +180,7 @@ class TestInventoryServer(TestCase):
                 "condition": 0,
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4,
+                "active": 0,
                 "name" : "testing"
             }
         )
@@ -196,7 +196,7 @@ class TestInventoryServer(TestCase):
                 "condition": "NEW",
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4,
+                "active": 0,
                 "name" : "testing"
             }
         )
@@ -212,7 +212,7 @@ class TestInventoryServer(TestCase):
                 "condition": 10,
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4,
+                "active": 0,
                 "name" : "testing"
             }
         )
@@ -237,7 +237,7 @@ class TestInventoryServer(TestCase):
                 "name": "Test Name",
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4,
+                "active": 0,
             },
         )
         # Check if response code is valid
@@ -250,7 +250,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(updated_item.name, "Test Name")
         self.assertEqual(updated_item.quantity, 2)
         self.assertEqual(updated_item.restock_level, 3)
-        self.assertEqual(updated_item.available, 4)
+        self.assertEqual(updated_item.active.value, 0)
 
     def test_update_inventory_missing_value(self):
         """It should Throw an error for Missing Value"""
@@ -260,7 +260,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(found_item.pid, test_item.pid)
         response = self.client.put(
             f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}",
-            json={"quantity": 2, "restock_level": 3, "available": 4},
+            json={"quantity": 2, "restock_level": 3, "active": 0},
         )
         # Check if response code is valid
         self.assertEqual(response.status_code, 400)
@@ -272,7 +272,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(updated_item.name, test_item.name)
         self.assertEqual(updated_item.quantity, test_item.quantity)
         self.assertEqual(updated_item.restock_level, test_item.restock_level)
-        self.assertEqual(updated_item.available, test_item.available)
+        self.assertEqual(updated_item.active, test_item.active)
 
     def test_update_inventory_bad_condition_id(self):
         """It should Throw an error for Erroneous Condition ID"""
@@ -286,7 +286,7 @@ class TestInventoryServer(TestCase):
                 "name": "Test Name",
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4,
+                "active": 0,
             },
         )
         # Check if response code is valid
@@ -299,7 +299,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(updated_item.name, test_item.name)
         self.assertEqual(updated_item.quantity, test_item.quantity)
         self.assertEqual(updated_item.restock_level, test_item.restock_level)
-        self.assertEqual(updated_item.available, test_item.available)
+        self.assertEqual(updated_item.active, test_item.active)
 
     def test_update_inventory_no_item_present(self):
         """It should Throw an error for Invalid Combination of (PID, Condition ID)"""
@@ -310,7 +310,7 @@ class TestInventoryServer(TestCase):
                 "name": "Test Name",
                 "quantity": 2,
                 "restock_level": 3,
-                "available": 4,
+                "active": 0,
             },
         )
         # Check if response code is valid
