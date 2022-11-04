@@ -33,6 +33,15 @@ class Condition(Enum):
     def has_value(cls, condition_id):
         return condition_id in cls._value2member_map_
 
+class Active(Enum):
+    """Enumeration for if product is in active state or not in inventory"""
+
+    ACTIVE = 0
+    INACTIVE = 1
+
+    @classmethod
+    def has_value(cls, active_id):
+        return active_id in cls._value2member_map_
 
 class Inventory(db.Model):
     """
@@ -47,7 +56,7 @@ class Inventory(db.Model):
     name = db.Column(db.String(63), nullable=False)
     quantity = db.Column(db.Integer, default=1)
     restock_level = db.Column(db.Integer)
-    available = db.Column(db.Integer)
+    active = db.Column(db.Enum(Active))
 
     def __init__(
         self,
@@ -56,7 +65,7 @@ class Inventory(db.Model):
         name: str,
         quantity: int,
         restock_level: int,
-        available: int,
+        active: Active,
     ):
         """Constructor for Item in Inventory"""
         self.pid = pid
@@ -64,18 +73,18 @@ class Inventory(db.Model):
         self.name = name
         self.quantity = quantity
         self.restock_level = restock_level
-        self.available = available
+        self.active = active
 
     def __repr__(self):
         return (
-            "<Inventory Product id=[%s], Condition=[%s], Name=[%s], Quantity=[%s], Restock_level=[%d], Available=[%d]>"
+            "<Inventory Product id=[%s], Condition=[%s], Name=[%s], Quantity=[%s], Restock_level=[%d], Active=[%s]>"
             % (
                 self.pid,
                 Condition(self.condition),
                 self.name,
                 self.quantity,
                 self.restock_level,
-                self.available,
+                Active(self.active),
             )
         )
 
@@ -117,7 +126,7 @@ class Inventory(db.Model):
             "name": self.name,
             "quantity": self.quantity,
             "restock_level": self.restock_level,
-            "available": self.available,
+            "active": self.active.value,
         }
 
     def deserialize(self, data):
@@ -147,11 +156,11 @@ class Inventory(db.Model):
                     "Invalid type for int [restock_level]"
                     + str(type(data["restock_level"]))
                 )
-            if isinstance(data["available"], int):
-                self.available = data["available"]
+            if isinstance(data["active"], int):
+                self.active = Active(data["active"])
             else:
                 raise DataValidationError(
-                    "Invalid type for int [available]" + str(type(data["available"]))
+                    "Invalid type for int [active]" + str(type(data["active"]))
                 )
         except KeyError as error:
             raise DataValidationError("Invalid Inventory: missing " + error.args[0])
@@ -165,6 +174,8 @@ class Inventory(db.Model):
         # This is where we initialize SQLAlchemy from the Flask app
         db.init_app(app)
         app.app_context().push()
+        # To remove the previous database model in local, uncomment the next line
+        # db.drop_all()
         db.create_all()  # make our sqlalchemy tables
 
     @classmethod
