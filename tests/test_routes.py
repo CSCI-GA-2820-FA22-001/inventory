@@ -354,19 +354,32 @@ class TestInventoryServer(TestCase):
         self.assertEqual(updated_item, None)
 
     def test_delete_inventory(self):
-        """It should Delete a Inventory item"""
+        """It should Delete a Inventory item using pid + condition"""
         test_item = InventoryFactory()
         test_item.create()
-        self.assertEqual(
-            Inventory.find_by_pid_condition(test_item.pid, test_item.condition),
-            test_item,
-        )
 
         response = self.client.delete(
-            f"{BASE_URL}/pid/{test_item.pid}/condition/{test_item.condition.value}"
+            f"{BASE_URL}/{test_item.pid}/condition/{test_item.condition.value}"
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         self.assertEqual(
             Inventory.find_by_pid_condition(test_item.pid, test_item.condition), None
+        )
+    
+    def test_delete_inventories(self):
+        """It should Delete a Inventory items using pid"""
+        test_item = InventoryFactory()
+        test_item2 = InventoryFactory()
+        test_item.create()
+        test_item2.pid = test_item.pid
+        test_item2.condition = Condition((test_item.condition.value + 1)%3)
+        test_item2.create()
+        response = self.client.delete(
+            f"{BASE_URL}/{test_item.pid}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertEqual(
+            list(Inventory.find(test_item.pid)), []
         )

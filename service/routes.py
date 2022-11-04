@@ -164,9 +164,29 @@ def update_inventory(pid, condition_id):
 
 
 ######################################################################
-# DELETE A INVENTORY ITEM
+# DELETE INVENTORY ITEMS WITH PID
 ######################################################################
-@app.route("/inventory/pid/<int:pid>/condition/<int:condition>", methods=["DELETE"])
+@app.route("/inventory/<int:pid>", methods=["DELETE"])
+def delete_inventories(pid):
+    """
+    Delete an inventory item
+
+    This endpoint will delete an inventory item based the id specified in the path
+    """
+    items = Inventory.find(pid)
+    for item in items:
+        item.delete()
+    app.logger.info(
+        "Inventory items with pid: %s successfully deleted",
+        pid
+    )
+    return "", status.HTTP_204_NO_CONTENT
+
+
+######################################################################
+# DELETE A INVENTORY ITEM WITH PID AND CONDITION
+######################################################################
+@app.route("/inventory/<int:pid>/condition/<int:condition>", methods=["DELETE"])
 def delete_inventory(pid, condition):
     """
     Delete an inventory item
