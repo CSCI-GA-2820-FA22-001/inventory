@@ -1,6 +1,6 @@
 import factory
 from factory.fuzzy import FuzzyInteger, FuzzyText, FuzzyChoice
-from service.models import Inventory, Condition, Active
+from service.models import Inventory, Condition
 
 
 class InventoryFactory(factory.Factory):
@@ -15,8 +15,4 @@ class InventoryFactory(factory.Factory):
     name = FuzzyText(length=10)
     quantity = FuzzyInteger(1, 100)
     restock_level = FuzzyInteger(1, 100)
-<<<<<<< HEAD
-    active = FuzzyChoice(choices=[Active.ACTIVE, Active.INACTIVE])
-=======
     active = FuzzyChoice(choices=[True, False])
->>>>>>> e7ff5e2 (putotal code refactor)
