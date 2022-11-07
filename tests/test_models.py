@@ -1,18 +1,18 @@
-"""
-Test cases for Inventory Model
-
-"""
+""" Inventory Models Test Suite """
 import os
 import logging
 import unittest
 from service import app
-from service.models import Inventory, DataValidationError, db, Condition, Active
+# from service.common import status
+from service.models import Inventory, db, DataValidationError
+#Condition
 from tests.factories import InventoryFactory
+
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
 )
-
+BASE_URL = "/inventory"
 
 ######################################################################
 #  INVENTORY   M O D E L   T E S T   C A S E S
@@ -49,104 +49,98 @@ class TestInventory(unittest.TestCase):
 
     def test_create_an_item(self):
         """It should Create an item and assert that it exists"""
-        item = Inventory(
-            pid=1,
-            condition=Condition.NEW,
-            name="Test",
-            quantity=1,
-            restock_level=2,
-            active=Active.ACTIVE,
-        )
-        self.assertTrue(item is not None)
-        self.assertEqual(item.pid, 1)
-        self.assertEqual(item.condition, Condition.NEW)
-        self.assertEqual(item.name, "Test")
-        self.assertEqual(item.quantity, 1)
-        self.assertEqual(item.restock_level, 2)
-        self.assertEqual(item.active, Active.ACTIVE)
+        test_item = InventoryFactory()
+
+        self.assertIsNotNone(test_item.name)
+        self.assertIsNotNone(test_item.pid)
+        self.assertIsNotNone(test_item.condition)
+        self.assertIsNotNone(test_item.quantity)
+        self.assertIsNotNone(test_item.restock_level)
+        self.assertIsNotNone(test_item.active)
+
 
     def test_add_an_item(self):
-        """It should Create an item and add it to the database"""
-        items = Inventory.all()
-        self.assertEqual(items, [])
-        item = Inventory(
-            pid=1,
-            condition=Condition.NEW,
-            name="Test",
-            quantity=1,
-            restock_level=2,
-            active=Active.ACTIVE,
-        )
-        self.assertTrue(item is not None)
-        self.assertEqual(item.pid, 1)
+        """It should Create an item and add it to the Inventory"""
+
+        inventory = Inventory.all()
+        self.assertEqual(inventory, [])
+        item = InventoryFactory()
         item.create()
-        # Assert that it was assigned an id and shows up in the database
-        self.assertIsNotNone(item.pid)
-        items = Inventory.all()
-        self.assertEqual(len(items), 1)
+        inventory = Inventory.all()
+        self.assertEqual(len(inventory), 1)
 
     def test_read_an_item(self):
-        """It should Read a Inventory"""
+        """It should Read an item in the Inventory"""
         item = InventoryFactory()
-        logging.debug(item)
         item.create()
-        self.assertIsNotNone(item.pid)
-        # Fetch it back
-        found_item = Inventory.find_by_pid_condition(
-            pid=item.pid, condition=item.condition
-        )
-        self.assertEqual(found_item.pid, item.pid)
-        self.assertEqual(found_item.condition, item.condition)
-        self.assertEqual(found_item.name, item.name)
-        self.assertEqual(found_item.quantity, item.quantity)
+
+        found_item = []
+        found_item = Inventory.find_by_pid_condition(pid=item.pid, condition=item.condition)
+        self.assertEqual(found_item[0].pid, item.pid)
+        self.assertEqual(found_item[0].condition, item.condition)
+        self.assertEqual(found_item[0].name, item.name)
+        self.assertEqual(found_item[0].quantity, item.quantity)
+        self.assertEqual(found_item[0].active, item.active)
 
     def test_update_an_item(self):
         """It should Update an Item in the Inventory"""
         item = InventoryFactory()
-        logging.debug(item)
         item.create()
-        logging.debug(item)
         self.assertIsNotNone(item.pid)
-        # Change it an save it
-        item.quantity = 100
+
+        item.quantity = 200
         item.update()
-        self.assertEqual(item.quantity, 100)
-        # Fetch it back and make sure the id hasn't changed
-        # but the data did change
+        self.assertEqual(item.quantity, 200)
+
         items = Inventory.all()
         self.assertEqual(len(items), 1)
-        self.assertEqual(items[0].quantity, 100)
+        self.assertEqual(items[0].quantity, 200)
 
-    def test_update_no_id(self):
-        """It should not Update a Inventory with no id"""
+    def test_update_an_item_no_pid(self):
+        """It should not Update an Item if there is no condition"""
         item = InventoryFactory()
-        logging.debug(item)
+        item.create()
         item.pid = None
+        self.assertIsNone(item.pid)
+
+        item.quantity = 200
         self.assertRaises(DataValidationError, item.update)
 
+    def test_update_an_item_no_condition(self):
+        """It should not Update an Item if there is no condition"""
+        item = InventoryFactory()
+        item.create()
+        item.condition = None
+        self.assertIsNone(item.condition)
+
+        item.quantity = 200
+        self.assertRaises(DataValidationError, item.update)
+
+
+
     def test_delete_an_item(self):
-        """It should Delete an Inventory Item"""
+        """It should Delete an item in the Inventory"""
         item = InventoryFactory()
         item.create()
         self.assertEqual(len(Inventory.all()), 1)
-        # delete the item and make sure it isn't in the database
+
         item.delete()
         self.assertEqual(len(Inventory.all()), 0)
 
     def test_list_all_items(self):
-        """It should List all Items in the Inventory database"""
+        """It should List all items in the Inventory"""
         items = Inventory.all()
         self.assertEqual(items, [])
-        # Create 3 Items
+
         for _ in range(3):
             item = InventoryFactory()
             item.create()
-        # See if we get back 3 items
+
         items = Inventory.all()
         self.assertEqual(len(items), 3)
 
     def test_serialize_an_item(self):
-        """It should serialize an Item"""
+        """It should Serialize an item"""
         item = InventoryFactory()
         data = item.serialize()
         self.assertNotEqual(data, None)
@@ -161,138 +155,57 @@ class TestInventory(unittest.TestCase):
         self.assertIn("restock_level", data)
         self.assertEqual(data["restock_level"], item.restock_level)
         self.assertIn("active", data)
-        self.assertEqual(data["active"], item.active.value)
+        self.assertEqual(data["active"], item.active)
 
     def test_deserialize_an_item(self):
-        """It should de-serialize an Item"""
-        data = InventoryFactory().serialize()
-        item = Inventory(
-            pid=1,
-            condition=Condition.NEW,
-            name="Test",
-            quantity=1,
-            restock_level=2,
-            active=Active.ACTIVE,
-        )
+        """It should Deserialize an item"""
+        item = InventoryFactory()
+        data = item.serialize()
         item.deserialize(data)
         self.assertNotEqual(item, None)
-        self.assertEqual(item.pid, 1)
+        self.assertEqual(item.pid, data["pid"])
         self.assertEqual(item.name, data["name"])
         self.assertEqual(item.quantity, data["quantity"])
         self.assertEqual(item.restock_level, data["restock_level"])
-        self.assertEqual(item.active.value, data["active"])
+        self.assertEqual(item.active, data["active"])
 
-    def test_deserialize_missing_data(self):
-        """It should not deserialize an Item with missing data"""
-        data = {"id": 1, "name": "Test Name"}
-        item = Inventory(
-            pid=1,
-            condition=Condition.NEW,
-            name="Test",
-            quantity=1,
-            restock_level=2,
-            active=Active.ACTIVE,
-        )
+    def test_deserialize_an_item_invalid_attribute(self):
+        """It should raise a DataValidationError """
+        item = InventoryFactory()
+        data = item.serialize()
+        data["condition"] = "Test"
         self.assertRaises(DataValidationError, item.deserialize, data)
 
-    def test_deserialize_bad_name(self):
-        """It should not deserialize a bad Name attribute"""
-        test_item = InventoryFactory()
-        data = test_item.serialize()
-        data["name"] = True
-        item = Inventory(
-            pid=1,
-            condition=Condition.NEW,
-            name="Test",
-            quantity=1,
-            restock_level=2,
-            active=Active.ACTIVE,
-        )
+
+    def test_deserialize_an_item_missing_data(self):
+        """It should raise a DataValidationError """
+        item = InventoryFactory()
+        data = item.serialize()
+        data.pop('quantity')
         self.assertRaises(DataValidationError, item.deserialize, data)
 
-    def test_deserialize_bad_quantity(self):
-        """It should not deserialize a bad Quantity attribute"""
-        test_item = InventoryFactory()
-        data = test_item.serialize()
-        data["quantity"] = "true"
-        item = Inventory(
-            pid=1,
-            condition=Condition.NEW,
-            name="Test",
-            quantity=1,
-            restock_level=2,
-            active=Active.ACTIVE,
-        )
+    def test_deserialize_an_item_bad_data(self):
+        """It should raise a DataValidationError """
+        item = InventoryFactory()
+        data = "Test"
         self.assertRaises(DataValidationError, item.deserialize, data)
 
-    def test_deserialize_bad_restock_level(self):
-        """It should not deserialize a bad Restock Level attribute"""
-        test_item = InventoryFactory()
-        data = test_item.serialize()
-        data["restock_level"] = "true"
-        item = Inventory(
-            pid=1,
-            condition=Condition.NEW,
-            name="Test",
-            quantity=1,
-            restock_level=2,
-            active=Active.ACTIVE,
-        )
-        self.assertRaises(DataValidationError, item.deserialize, data)
 
-    def test_deserialize_bad_active(self):
-        """It should not deserialize a bad active attribute"""
-        test_item = InventoryFactory()
-        data = test_item.serialize()
-        data["active"] = "abc"
-        item = Inventory(
-            pid=1,
-            condition=Condition.NEW,
-            name="Test",
-            quantity=1,
-            restock_level=2,
-            active=Active.ACTIVE,
-        )
-        self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_find_item_pid_condition(self):
-        """It should Find an Item in the Inventory by PID"""
+        """It should Find an item by PID and Condition"""
+        items = []
         items = InventoryFactory.create_batch(5)
-        for item in items:
-            item.create()
-        logging.debug(items)
-        # make sure they got saved
+        for i in items:
+            i.create()
+
         self.assertEqual(len(Inventory.all()), 5)
-        # find the 2nd item in the list
-        item = Inventory.find_by_pid_condition(items[1].pid, items[1].condition)
-        self.assertIsNot(item, None)
-        self.assertEqual(item.pid, items[1].pid)
-        self.assertEqual(item.name, items[1].name)
-        self.assertEqual(item.quantity, items[1].quantity)
-        self.assertEqual(item.condition, items[1].condition)
 
-    def test_find_by_name(self):
-        """It should Find a Item by Name"""
-        items = InventoryFactory.create_batch(1)
-        for item in items:
-            item.create()
-        name = items[0].name
-        found = Inventory.find_by_name(name)
-        self.assertEqual(found.count(), 1)
-        self.assertEqual(found[0].pid, items[0].pid)
-        self.assertEqual(found[0].quantity, items[0].quantity)
-
-    def test_find(self):
-        """Find function should work"""
-        items = InventoryFactory.create_batch(1)
-        for item in items:
-            item.create()
-        pid = items[0].pid
-        found = Inventory.find(pid)
-        self.assertEqual(found.count(), 1)
-        self.assertEqual(found[0].pid, items[0].pid)
-
-    def test_active_has_value(self):
-        """Test Active Has Value Function"""
-        self.assertTrue(Active.has_value(Active.ACTIVE.value))
-        self.assertFalse(Active.has_value(10))
+        item = items[1]
+        found_item = []
+        found_item = Inventory.find_by_pid_condition(item.pid, item.condition)
+        self.assertIsNot(found_item[0], None)
+        self.assertEqual(found_item[0].pid, item.pid)
+        self.assertEqual(found_item[0].name, item.name)
+        self.assertEqual(found_item[0].quantity, item.quantity)
+        self.assertEqual(found_item[0].condition, item.condition)

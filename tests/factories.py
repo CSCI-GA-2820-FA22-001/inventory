@@ -1,6 +1,3 @@
-"""
-Test Factory to make fake objects for testing
-"""
 import factory
 from factory.fuzzy import FuzzyInteger, FuzzyText, FuzzyChoice
 from service.models import Inventory, Condition, Active
@@ -11,7 +8,6 @@ class InventoryFactory(factory.Factory):
 
     class Meta:  # pylint: disable=too-few-public-methods
         """Maps factory to data model"""
-
         model = Inventory
 
     pid = factory.Sequence(lambda n: n)
@@ -19,4 +15,8 @@ class InventoryFactory(factory.Factory):
     name = FuzzyText(length=10)
     quantity = FuzzyInteger(1, 100)
     restock_level = FuzzyInteger(1, 100)
+<<<<<<< HEAD
     active = FuzzyChoice(choices=[Active.ACTIVE, Active.INACTIVE])
+=======
+    active = FuzzyChoice(choices=[True, False])
+>>>>>>> e7ff5e2 (putotal code refactor)
