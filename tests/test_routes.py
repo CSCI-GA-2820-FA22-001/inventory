@@ -44,7 +44,7 @@ class TestInventoryServer(TestCase):
         db.session.remove()
 
     ######################################################################
-    #  P L A C E   T E S T   C A S E S   H E R E
+    # T E S T   C A S E S
     ######################################################################
 
     def test_index(self):
@@ -53,7 +53,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     def test_get_inventory_list(self):
-        """It should Get a list of Inventory"""
+        """It should Get a list of all Inventory items"""
         test_item_number = 3
         for _ in range(test_item_number):
             test_item = InventoryFactory()
@@ -63,12 +63,12 @@ class TestInventoryServer(TestCase):
         self.assertEqual(test_item_number, len(data))
 
     def test_get_inventory_with_condition(self):
-        """It should Get a single Inventory item"""
+        """It should Get a single Inventory item with the given PID and Condition"""
         test_item = InventoryFactory()
         test_item.create()
         response = self.client.get(
             f"{BASE_URL}/{test_item.pid}",
-            query_string= f"condition={test_item.condition.name}")
+            query_string= f"condition={test_item.condition.value}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
@@ -77,7 +77,7 @@ class TestInventoryServer(TestCase):
 
 
     def test_get_inventory_without_condition(self):
-        """It should Get a single Inventory item"""
+        """It should Get all Inventory items with the given PID"""
         test_item = InventoryFactory()
         test_item.create()
         response = self.client.get( f"{BASE_URL}/{test_item.pid}")
@@ -85,12 +85,25 @@ class TestInventoryServer(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(data[0]["pid"], test_item.pid)
+        self.assertEqual(data[0]["condition"], test_item.condition.value)
 
     def test_get_inventory_bad_pid(self):
-        """It should raise a 404 error"""
-
+        """It should not Get an item with a bad PID"""
         pid = "Test"
         response = self.client.get(f"{BASE_URL}/{pid}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_inventory_does_not_exist(self):
+        """It should not Get an item that does not exist"""
+        response = self.client.get(BASE_URL)
+        data = response.get_json()
+        self.assertEqual(0, len(data))
+
+        test_item = InventoryFactory()
+        response = self.client.get(
+            f"{BASE_URL}/{test_item.pid}",
+            query_string= f"condition={test_item.condition.value}")
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
@@ -113,7 +126,6 @@ class TestInventoryServer(TestCase):
         self.assertEqual(new_item["active"], test_item.active)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        # Check that the location header was correct
         response = self.client.get(location)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         found_item = response.get_json()
@@ -124,6 +136,25 @@ class TestInventoryServer(TestCase):
         self.assertEqual(found_item[0]["restock_level"], test_item.restock_level)
         self.assertEqual(found_item[0]["active"], test_item.active)
 
+    def test_create_no_pid(self):
+        """It should not Create an item with no arguments"""
+        response = self.client.post(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_create_bad_pid(self):
+        """It should not Create a Pet with bad PID"""
+        test_item = InventoryFactory()
+        test_item.pid = "Test"
+        response = self.client.post(BASE_URL, json=test_item.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_bad_condition(self):
+        """It should not Create a item with bad Condition"""
+        item = InventoryFactory()
+        test_item = item.serialize()
+        test_item["condition"] = "Test"
+        response = self.client.post(BASE_URL, json=test_item)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def test_update_inventory(self):
@@ -145,25 +176,25 @@ class TestInventoryServer(TestCase):
         updated_item = response.get_json()
         self.assertEqual(updated_item["name"], "Test")
 
-    def test_update_inventory_bad_item(self):
-        """It should throw a 404 error"""
-        test_item = []
-        test_item = InventoryFactory()
-        response = self.client.post(BASE_URL, json=test_item.serialize())
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        location = response.headers.get("Location", None)
-        self.assertIsNotNone(location)
-
-        new_item = []
-        new_item = response.get_json()
-        new_item["condition"] = "Test"
-        pid = new_item["pid"]
-        response = self.client.put(f"{BASE_URL}/{pid}", json=new_item)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_inventory_does_not_exist(self):
-        """It should throw a 404 error"""
+        """It should not Update an item that does not exist """
+        test_item = []
+        test_item = InventoryFactory()
+        response = self.client.post(BASE_URL, json=test_item.serialize())
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        new_item = []
+        new_item = response.get_json()
+        new_item["pid"] = -5
+        response = self.client.put(f"{BASE_URL}/{new_item['pid']}", json=new_item)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_inventory_bad_condition(self):
+        """It should not Update an item with an invalid Condtion """
         test_item = []
         test_item = InventoryFactory()
         response = self.client.post(BASE_URL, json=test_item.serialize())
@@ -175,12 +206,18 @@ class TestInventoryServer(TestCase):
         new_item = []
         new_item = response.get_json()
         new_item["condition"] = "Test"
-        new_item["pid"] = -5
-        pid = new_item["pid"]
-        response = self.client.put(f"{BASE_URL}/{pid}", json=new_item)
+        response = self.client.put(f"{BASE_URL}/{new_item['pid']}", json=new_item)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_delete_recommendation(self):
+
+    # def test_update_inventory_empty_inventory(self):
+    #     """It should not Update an item when the Inventory is empty """
+    #     test_item = []
+    #     test_item = InventoryFactory()
+    #     response = self.client.put(f"{BASE_URL}/{test_item.pid}", json=test_item.serialize())
+    #     self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_item(self):
         """It should Delete an Inventory item"""
         test_item = []
         test_item = InventoryFactory()
@@ -192,11 +229,11 @@ class TestInventoryServer(TestCase):
 
         response = self.client.get(
             f"{BASE_URL}/{test_item.pid}",
-            query_string= f"condition={test_item.condition.name}")
+            query_string= f"condition={test_item.condition.value}")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_delete_recommendation_bad_condition(self):
-        """It should throw a 404 error"""
+    def test_delete_item_bad_condition(self):
+        """It should Delete an item with a bad Condition"""
         test_item = []
         test_item = InventoryFactory()
         self.client.post(BASE_URL, json=test_item.serialize())
@@ -204,4 +241,4 @@ class TestInventoryServer(TestCase):
         test_item = test_item.serialize()
         test_item["condition"] = "Test"
         response = self.client.delete(f"{BASE_URL}/{test_item['pid']}", json=test_item)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

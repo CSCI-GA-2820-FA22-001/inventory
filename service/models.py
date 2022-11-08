@@ -26,13 +26,10 @@ class Condition(Enum):
 
 
 class Inventory(db.Model):
-    """
-    Class that represents a Inventory
-    """
+    """ Class that represents a Inventory """
 
     app = None
 
-    # Table Schema
     pid = db.Column(db.Integer, primary_key=True)
     condition = db.Column(db.Enum(Condition), primary_key=True)
     name = db.Column(db.String(63))
@@ -50,7 +47,7 @@ class Inventory(db.Model):
         restock_level = 10,
         active = True,
     ):
-        """Constructor for Item in Inventory"""
+        """ Constructor for Item in Inventory """
         self.pid = pid
         self.condition = condition
         self.name = name
@@ -61,7 +58,8 @@ class Inventory(db.Model):
 
     def create(self):
         """ Creates an Inventory item in the database """
-
+        # pylint: disable=invalid-name
+        # pylint: disable=attribute-defined-outside-init
         self.id = None
         db.session.add(self)
         db.session.commit()
@@ -93,14 +91,47 @@ class Inventory(db.Model):
     def deserialize(self, data: dict):
         """ Creates an Inventory item from a dictionary """
         try:
-            self.pid = data["pid"]
-            self.condition = Condition(data["condition"])
-            self.name = data["name"]
-            self.quantity = data["quantity"]
-            self.restock_level = data["restock_level"]
-            self.active = data["active"]
-        except ValueError as error:
-            raise DataValidationError("Invalid attribute: " + error.args[0]) from error
+            if isinstance(data["pid"], int):
+                self.pid = data["pid"]
+            else:
+                raise DataValidationError("Invalid type for int [pid]: "
+                + str(type(data["pid"])))
+
+            #pylint: disable=protected-access
+            if data["condition"] in Condition._value2member_map_:
+                self.condition = Condition(data["condition"])
+            else:
+                raise DataValidationError("Invalid condition: "
+                + str(type(data["condition"])))
+
+            if isinstance(data["name"], str):
+                self.name = data["name"]
+            else:
+                raise DataValidationError("Invalid type for str [name]: "
+                + str(type(data["name"])))
+
+            if isinstance(data["quantity"], int):
+                self.quantity = data["quantity"]
+            else:
+                raise DataValidationError("Invalid type for int [quantity]: "
+                + str(type(data["quantity"])))
+
+            if isinstance(data["restock_level"], int):
+                self.restock_level = data["restock_level"]
+            else:
+                raise DataValidationError("Invalid type for int [restock_level]: "
+                + str(type(data["restock_level"])))
+
+            if isinstance(data["active"], bool):
+                self.active = data["active"]
+            else:
+                raise DataValidationError("Invalid type for bool [active]: "
+                + str(type(data["active"])))
+
+        # except ValueError as error:
+        #     raise DataValidationError("Invalid value: " + error.args[0]) from error
+        # except AttributeError as error:
+        #     raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
             raise DataValidationError("Invalid item: missing " + error.args[0]) from error
         except TypeError as error:
@@ -127,8 +158,16 @@ class Inventory(db.Model):
     def find_by_pid(cls, pid) -> list:
         """Finds a Inventory item by it's PID"""
         return cls.query.filter(cls.pid == pid)
+        # if not result:
+        #     raise DataValidationError("item with PID {pid} does not exist")
+        # return result
 
     @classmethod
     def find_by_pid_condition(cls, pid, condition):
         """Finds a Inventory by it's ID and condition"""
+
         return cls.query.filter(cls.pid == pid, cls.condition == condition)
+        # if not result:
+        #     raise DataValidationError(
+        #     "item with PID {pid} and Condition {condition} does not exist")
+        # return result
