@@ -155,19 +155,28 @@ class Inventory(db.Model):
         return cls.query.all()
 
     @classmethod
-    def find_by_pid(cls, pid) -> list:
+    def find_by_pid(cls, pid):
         """Finds a Inventory item by it's PID"""
-        return cls.query.filter(cls.pid == pid)
-        # if not result:
-        #     raise DataValidationError("item with PID {pid} does not exist")
-        # return result
+        results = []
+        results = cls.query.filter(cls.pid == pid)
+        return results
 
     @classmethod
-    def find_by_pid_condition(cls, pid, condition):
+    def find_by_pid_condition(cls, pid, condition_value):
         """Finds a Inventory by it's ID and condition"""
 
-        return cls.query.filter(cls.pid == pid, cls.condition == condition)
-        # if not result:
-        #     raise DataValidationError(
-        #     "item with PID {pid} and Condition {condition} does not exist")
-        # return result
+        try:
+            condition = Condition(int(condition_value))
+        except ValueError as error:
+            raise DataValidationError(f"Condition {condition_value} is invalid :"
+                + str(error)) from error
+
+        try:
+            pid = int(pid)
+        except ValueError as error:
+            raise DataValidationError(f"PID {pid} is invalid :" + str(error)) from error
+
+        result = []
+        result =  cls.query.filter(cls.pid == pid, cls.condition == condition).first()
+
+        return result

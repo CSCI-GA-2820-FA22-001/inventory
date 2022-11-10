@@ -72,14 +72,13 @@ class TestInventory(unittest.TestCase):
         item = InventoryFactory()
         item.create()
 
-        found_item = []
-        found_item = Inventory.find_by_pid_condition(pid=item.pid, condition=item.condition)
-        self.assertEqual(found_item[0].pid, item.pid)
-        self.assertEqual(found_item[0].condition, item.condition)
-        self.assertEqual(found_item[0].name, item.name)
-        self.assertEqual(found_item[0].quantity, item.quantity)
-        self.assertEqual(found_item[0].restock_level, item.restock_level)
-        self.assertEqual(found_item[0].active, item.active)
+        found_item = Inventory.find_by_pid_condition(item.pid, item.condition.value)
+        self.assertEqual(found_item.pid, item.pid)
+        self.assertEqual(found_item.condition, item.condition)
+        self.assertEqual(found_item.name, item.name)
+        self.assertEqual(found_item.quantity, item.quantity)
+        self.assertEqual(found_item.restock_level, item.restock_level)
+        self.assertEqual(found_item.active, item.active)
 
     def test_update_an_item(self):
         """It should Update an Item in the Inventory"""
@@ -169,13 +168,6 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(item.restock_level, data["restock_level"])
         self.assertEqual(item.active, data["active"])
 
-    # def test_deserialize_an_item_invalid_attribute(self):
-    #     """It should not Deserialize an item with an invalid attribute"""
-    #     item = InventoryFactory()
-    #     data = item.serialize()
-    #     data["condition"] = "Test"
-    #     self.assertRaises(DataValidationError, item.deserialize, data)
-
 
     def test_deserialize_an_item_missing_data(self):
         """It should not Deserialize an item with missing data """
@@ -235,7 +227,6 @@ class TestInventory(unittest.TestCase):
 
     def test_find_item_pid(self):
         """It should Find an item by PID"""
-        items = []
         items = InventoryFactory.create_batch(5)
         for i in items:
             i.create()
@@ -243,20 +234,18 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(len(Inventory.all()), 5)
 
         item = items[1]
-        found_item = []
-        found_item = Inventory.find_by_pid(item.pid)
-        self.assertIsNot(found_item[0], None)
-        self.assertEqual(found_item[0].pid, item.pid)
-        self.assertEqual(found_item[0].name, item.name)
-        self.assertEqual(found_item[0].condition, item.condition)
-        self.assertEqual(found_item[0].quantity, item.quantity)
-        self.assertEqual(found_item[0].restock_level, item.restock_level)
-        self.assertEqual(found_item[0].active, item.active)
+        found_item = Inventory.find_by_pid(item.pid)[0]
+        self.assertIsNot(found_item, None)
+        self.assertEqual(found_item.pid, item.pid)
+        self.assertEqual(found_item.name, item.name)
+        self.assertEqual(found_item.condition, item.condition)
+        self.assertEqual(found_item.quantity, item.quantity)
+        self.assertEqual(found_item.restock_level, item.restock_level)
+        self.assertEqual(found_item.active, item.active)
 
 
     def test_find_item_pid_condition(self):
         """It should Find an item by PID and Condition"""
-        items = []
         items = InventoryFactory.create_batch(5)
         for i in items:
             i.create()
@@ -264,12 +253,11 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(len(Inventory.all()), 5)
 
         item = items[1]
-        found_item = []
-        found_item = Inventory.find_by_pid_condition(item.pid, item.condition)
-        self.assertIsNot(found_item[0], None)
-        self.assertEqual(found_item[0].pid, item.pid)
-        self.assertEqual(found_item[0].name, item.name)
-        self.assertEqual(found_item[0].condition, item.condition)
-        self.assertEqual(found_item[0].quantity, item.quantity)
-        self.assertEqual(found_item[0].restock_level, item.restock_level)
-        self.assertEqual(found_item[0].active, item.active)
+        found_item = Inventory.find_by_pid_condition(item.pid, item.condition.value)
+        self.assertIsNot(found_item, None)
+        self.assertEqual(found_item.pid, item.pid)
+        self.assertEqual(found_item.name, item.name)
+        self.assertEqual(found_item.condition, item.condition)
+        self.assertEqual(found_item.quantity, item.quantity)
+        self.assertEqual(found_item.restock_level, item.restock_level)
+        self.assertEqual(found_item.active, item.active)

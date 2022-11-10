@@ -41,23 +41,31 @@ def list_inventory():
 ######################################################################
 @app.route("/inventory/<int:pid>", methods=["GET"])
 def get_inventory(pid):
-    """ Retrieves a single Inventory item """
-    results = []
+    """ Retrieves Inventory items """
+    condition = None
     condition = request.args.get("condition")
     if condition:
         app.logger.info(f"Request for item {pid} with condition {condition}")
-        results = Inventory.find_by_pid_condition(pid, Condition(int(condition)))
+        results = Inventory.find_by_pid_condition(pid, condition)
+
+        if not results:
+            message = f"No items could be found for PID: {pid} and Condition {condition}"
+            app.logger.info(message)
+            abort(status.HTTP_404_NOT_FOUND, message)
+
+        items = results.serialize()
+
     else:
-        app.logger.info(f"Request for item {pid}")
+        app.logger.info(f"Request for items with {pid}")
         results = Inventory.find_by_pid(pid)
 
-    items = [item.serialize() for item in results]
-    if not items:
-        message = f"No items could be found for ID: {pid}"
-        if condition:
-            message += f" with condition: {condition}"
-        app.logger.info(message)
-        abort(status.HTTP_404_NOT_FOUND, message)
+        if results.count() == 0:
+            message = f"No items could be found for PID: {pid}"
+            app.logger.info(message)
+            abort(status.HTTP_404_NOT_FOUND, message)
+
+        items = [item.serialize() for item in results]
+
 
     app.logger.info("Returning %d Inventory items", len(items))
     return jsonify(items), status.HTTP_200_OK
@@ -71,8 +79,15 @@ def create_inventory():
     """ Creates an Inventory item """
     app.logger.info("Request to create an Inventory item")
     check_content_type("application/json")
-    item = Inventory(pid = -100, condition = Condition(0))
     arguments = request.get_json()
+
+    item = Inventory.find_by_pid_condition(arguments["pid"], arguments["condition"])
+
+    if item:
+        abort(status.HTTP_409_CONFLICT,
+        f"Item with PID {arguments['pid']} and condition {arguments['condition']} already exists")
+
+    item = Inventory(pid = -100, condition = Condition(0))
     item = item.deserialize(arguments)
     item.create()
     location_url = url_for("get_inventory", pid=item.pid,
@@ -91,27 +106,20 @@ def update_inventory(pid):
     """ Updates an Inventory item """
     app.logger.info("Request to update Inventory item with PID: %s", pid)
     check_content_type("application/json")
-    arguments = []
     arguments = request.get_json()
 
-    try:
-        condition = Condition(arguments["condition"])
-    except ValueError:
-        abort(status.HTTP_404_NOT_FOUND, f"Condition {arguments['condition']} is invalid")
+    item = Inventory.find_by_pid_condition(pid, arguments["condition"])
 
-    items = []
-    items = Inventory.find_by_pid_condition(pid, condition)
-
-    if not items:
+    if not item:
         abort(status.HTTP_404_NOT_FOUND,
-        f"Item with PID '{pid}' and condition {condition.name} does not exist")
+        f"Item with PID '{pid}' and condition {arguments['condition']} does not exist")
 
-    item = items[0].deserialize(request.get_json())
+    item = item.deserialize(request.get_json())
     item.update()
-    location_url = url_for("get_inventory", pid=pid, condition=condition, _external=True)
-    app.logger.info("Inventory item with PID [%s] and condition [%s] updated", pid, condition.name)
-    return jsonify(item.serialize()), status.HTTP_200_OK, {"Location": location_url}
 
+    app.logger.info("Inventory item with PID [%s] and condition [%s] updated",
+    pid, arguments["condition"])
+    return jsonify(item.serialize()), status.HTTP_200_OK
 
 ######################################################################
 # DELETE A INVENTORY ITEM
@@ -120,22 +128,24 @@ def update_inventory(pid):
 def delete_inventory(pid):
     """ Delete an Inventory item"""
     app.logger.info("Request to delete Inventory item with PID: %s", pid)
-    arguments = []
-    arguments = request.get_json()
 
-    message = f"Inventory item with PID {pid}"
+    condition = []
+    condition = request.args.get("condition")
 
-    try:
-        condition = Condition(arguments["condition"])
+    if condition:
         item = Inventory.find_by_pid_condition(pid, condition)
-        message += f" and Condition: {condition}"
-    except ValueError:
-        item = Inventory.find_by_pid(pid)
+        if item:
+            item.delete()
+            app.logger.info(f"Inventory item with PID {pid}"
+            f" and Condition {condition} deleted")
+    else:
 
-    if item:
-        item.delete()
-        message += " deleted"
-        app.logger.info(message)
+        items = Inventory.find_by_pid(pid)
+        if items.count() != 0:
+            for i in items:
+                i.delete()
+
+            app.logger.info(f"All Inventory items with PID {pid} deleted")
 
     return "", status.HTTP_204_NO_CONTENT
 
@@ -151,8 +161,6 @@ def init_db():
     # pylint: disable=invalid-name
     global app
     Inventory.init_db(app)
-
-
 
 def check_content_type(content_type):
     """Checks that the media type is correct"""
