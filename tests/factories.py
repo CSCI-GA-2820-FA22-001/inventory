@@ -1,3 +1,4 @@
+""" Test factory to create Inventory objects for testing"""
 import factory
 from factory.fuzzy import FuzzyInteger, FuzzyText, FuzzyChoice
 from service.models import Inventory, Condition
