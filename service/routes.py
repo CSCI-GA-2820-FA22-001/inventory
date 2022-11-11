@@ -117,6 +117,14 @@ def delete_inventory(pid):
 
 
 ######################################################################
+# HEALTH CHECK FOR APP
+######################################################################
+@app.route("/health", methods=["GET"])
+def health():
+    """Get Shallow Health of the current Service"""
+    return jsonify(status="OK"),status.HTTP_200_OK
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 
