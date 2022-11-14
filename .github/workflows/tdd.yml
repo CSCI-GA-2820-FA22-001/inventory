@@ -1,4 +1,4 @@
-name: Run TDD Tests
+name: CI Build
 on:
   push:
   pull_request:
