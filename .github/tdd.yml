@@ -1,50 +1,51 @@
-name: Run TDD Python Tests
+name: Run TDD Tests
 on:
+  push:
   pull_request:
     branches:
       - master
     paths-ignore:
       - 'README.md'
       - '.vscode/**'
-
 jobs:
   build:
     runs-on: ubuntu-latest
     container: python:3.9-slim
     services:
       postgres:
-        image: postgres
+        image: postgres:alpine
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
         ports:
           - 5432:5432
+        # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
-    env:
-      DATABASE_URI: "postgres://postgres:postgres@postgres:5432/testdb"
-
+    # Steps for the build
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      
-      - name: Install PostGres SQL dependencies
+
+      - name: Install libraries for PostgreSQL
         run: |
           apt-get update
           apt-get install -y gcc libpq-dev
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip wheel
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt
 
-      - name: Running TDD with nosetests
+      - name: Run unit tests with nose
         run: nosetests
+        env:
+          DATABASE_URI: "postgresql://postgres:postgres@postgres:5432/postgres"
 
       - name: Upload code coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v2 
         with:
-          version: "v0.1.13"
+          version: "v0.1.13" 

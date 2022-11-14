@@ -11,6 +11,7 @@ from tests.factories import InventoryFactory
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
 )
+HEALTH_BASE_URL = "/health"
 BASE_URL = "/inventory"
 
 
@@ -205,3 +206,8 @@ class TestInventoryServer(TestCase):
         test_item["condition"] = "Test"
         response = self.client.delete(f"{BASE_URL}/{test_item['pid']}", json=test_item)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_health_check(self):
+        """It should return a 200 OK status"""
+        response = self.client.get(f"{HEALTH_BASE_URL}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

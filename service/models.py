@@ -62,7 +62,6 @@ class Inventory(db.Model):
     def create(self):
         """ Creates an Inventory item in the database """
 
-        self.id = None
         db.session.add(self)
         db.session.commit()
 
