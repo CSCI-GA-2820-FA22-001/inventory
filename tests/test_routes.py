@@ -62,7 +62,52 @@ class TestInventoryServer(TestCase):
         data = response.get_json()
         self.assertEqual(test_item_number, len(data))
 
-    def test_get_inventory_with_condition(self):
+
+    def test_get_inventory_list_filter_pid(self):
+        """It should Get a list of Inventory items filtered by PID"""
+
+        items = InventoryFactory.create_batch(5)
+        for i in items:
+            i.create()
+
+        pid = items[0].pid
+        response = self.client.get(BASE_URL, query_string= f"pid={pid}")
+        data = response.get_json()
+        self.assertEqual(1, len(data))
+
+    def test_get_inventory_list_filter_condition(self):
+        """It should Get a list of Inventory items filtered by Condition"""
+
+        items = InventoryFactory.create_batch(5)
+        items[0].condition = Condition(0)
+        items[1].condition = Condition(0)
+        items[2].condition = Condition(1)
+        items[3].condition = Condition(1)
+        items[4].condition = Condition(1)
+        for i in items:
+            i.create()
+
+        response = self.client.get(BASE_URL, query_string= f"condition={0}")
+        data = response.get_json()
+        self.assertEqual(2, len(data))
+
+    def test_get_inventory_list_filter_active(self):
+        """It should Get a list of Inventory items filtered by Active"""
+
+        items = InventoryFactory.create_batch(5)
+        items[0].active = True
+        items[1].active = True
+        items[2].active = True
+        items[3].active = False
+        items[4].active = False
+        for i in items:
+            i.create()
+
+        response = self.client.get(BASE_URL, query_string= f"active={True}")
+        data = response.get_json()
+        self.assertEqual(3, len(data))
+
+    def test_get_inventory_with_pid_with_condition(self):
         """It should Get a single Inventory item with the given PID and Condition"""
         test_item = InventoryFactory()
         test_item.create()
@@ -76,8 +121,8 @@ class TestInventoryServer(TestCase):
         self.assertEqual(Condition(data["condition"]), test_item.condition)
 
 
-    def test_get_inventory_without_condition(self):
-        """It should Get all Inventory items with the given PID"""
+    def test_get_inventory_with_pid_without_condition(self):
+        """It should Get all Inventory itsems with the given PID"""
         test_item_one = InventoryFactory()
         test_item_one.condtion = Condition(0)
         test_item_one.create()
@@ -247,7 +292,7 @@ class TestInventoryServer(TestCase):
     def test_delete_item_with_condition(self):
         """It should Delete an Inventory item with Condition"""
         test_item_one = InventoryFactory()
-        test_item_one.condtion = Condition(0)
+        test_item_one.condition = Condition(0)
         self.client.post(BASE_URL, json=test_item_one.serialize())
 
         test_item_two = InventoryFactory()
@@ -256,7 +301,7 @@ class TestInventoryServer(TestCase):
         self.client.post(BASE_URL, json=test_item_two.serialize())
         pid = test_item_one.pid
 
-        response = self.client.delete(f"{BASE_URL}/{pid}", json=test_item_one.serialize())
+        response = self.client.delete(f"{BASE_URL}/{pid}/{0}")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         response = self.client.get(BASE_URL)
@@ -268,7 +313,7 @@ class TestInventoryServer(TestCase):
     def test_delete_item_without_condition(self):
         """It should Delete an Inventory item without Condition"""
         test_item_one = InventoryFactory()
-        test_item_one.condtion = Condition(0)
+        test_item_one.condition = Condition(0)
         self.client.post(BASE_URL, json=test_item_one.serialize())
 
         test_item_two = InventoryFactory()
@@ -282,3 +327,45 @@ class TestInventoryServer(TestCase):
 
         response = self.client.get(f"{BASE_URL}/{pid}")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_activate(self):
+        """ It should Activate an Inventory item"""
+        test_item = InventoryFactory()
+        test_item.active = False
+        test_item.create()
+        self.client.put(f"{BASE_URL}/activate/{test_item.pid}/{test_item.condition.value}")
+        response = self.client.get(
+            f"{BASE_URL}/{test_item.pid}",
+            query_string= f"condition={test_item.condition.value}")
+
+        data = response.get_json()
+        self.assertEqual(data["active"], True)
+
+
+    def test_deactivate(self):
+        """ It should Deactivate an Inventory item"""
+        test_item = InventoryFactory()
+        test_item.active = True
+        test_item.create()
+        self.client.put(f"{BASE_URL}/deactivate/{test_item.pid}/{test_item.condition.value}")
+        response = self.client.get(
+            f"{BASE_URL}/{test_item.pid}",
+            query_string= f"condition={test_item.condition.value}")
+        data = response.get_json()
+        self.assertEqual(data["active"], False)
+
+
+
+# def test_get_inventory_with_pid_with_condition(self):
+#         """It should Get a single Inventory item with the given PID and Condition"""
+#         test_item = InventoryFactory()
+#         test_item.create()
+#         response = self.client.get(
+#             f"{BASE_URL}/{test_item.pid}",
+#             query_string= f"condition={test_item.condition.value}")
+
+#         self.assertEqual(response.status_code, status.HTTP_200_OK)
+#         data = response.get_json()
+#         self.assertEqual(data["pid"], test_item.pid)
+#         self.assertEqual(Condition(data["condition"]), test_item.condition)

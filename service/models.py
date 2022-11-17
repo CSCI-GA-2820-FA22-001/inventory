@@ -141,6 +141,14 @@ class Inventory(db.Model):
 
         return self
 
+    def activate(self):
+        """ Sets the active flag to true """
+        self.active = True
+
+    def deactivate(self):
+        """ Sets the active flag to false """
+        self.active = False
+
     @classmethod
     def init_db(cls, app):
         """Initializes the database session"""
@@ -155,15 +163,8 @@ class Inventory(db.Model):
         return cls.query.all()
 
     @classmethod
-    def find_by_pid(cls, pid):
-        """Finds a Inventory item by it's PID"""
-        results = []
-        results = cls.query.filter(cls.pid == pid)
-        return results
-
-    @classmethod
     def find_by_pid_condition(cls, pid, condition_value):
-        """Finds a Inventory by it's ID and condition"""
+        """Finds a Inventory by it's PID and condition"""
 
         try:
             condition = Condition(int(condition_value))
@@ -177,6 +178,35 @@ class Inventory(db.Model):
             raise DataValidationError(f"PID {pid} is invalid :" + str(error)) from error
 
         result = []
-        result =  cls.query.filter(cls.pid == pid, cls.condition == condition).first()
-
+        result = cls.query.filter(cls.pid == pid, cls.condition == condition).first()
         return result
+
+    @classmethod
+    def find_by_pid(cls, pid):
+        """Finds a Inventory item by it's PID"""
+        try:
+            pid = int(pid)
+        except ValueError as error:
+            raise DataValidationError(f"PID {pid} is invalid :"
+                + str(error)) from error
+        return cls.query.filter(cls.pid == pid)
+
+    @classmethod
+    def find_by_condition(cls, condition_value):
+        """Finds a Inventory item by it's Condition"""
+        try:
+            condition = Condition(int(condition_value))
+        except ValueError as error:
+            raise DataValidationError(f"Condition {condition_value} is invalid :"
+                + str(error)) from error
+
+        return cls.query.filter(cls.condition == condition)
+
+
+    @classmethod
+    def find_by_active(cls, active):
+        """Finds a Inventory item by it's Active status"""
+        if not isinstance(active, bool):
+            raise DataValidationError(f"Active {active} is invalid")
+
+        return cls.query.filter(cls.active == active)

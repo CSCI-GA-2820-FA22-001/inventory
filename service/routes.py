@@ -28,10 +28,27 @@ def index():
 ######################################################################
 @app.route("/inventory", methods=["GET"])
 def list_inventory():
-    """Returns all of the items in the Inventory"""
+    """Returns a list of the items in the Inventory"""
     app.logger.info("Request for Inventory list")
-    inventory = Inventory.all()
-    results = [item.serialize() for item in inventory]
+
+    pid = request.args.get("pid")
+    condition = request.args.get("condition")
+    active = request.args.get("active")
+
+    if pid:
+        app.logger.info("filtered by pid")
+        items = Inventory.find_by_pid(pid)
+    elif condition:
+        app.logger.info("filtered by condition")
+        items = Inventory.find_by_condition(condition)
+    elif active:
+        app.logger.info("filtered by active")
+        items = Inventory.find_by_active(active)
+    else:
+        app.logger.info("find all")
+        items = Inventory.all()
+
+    results = [item.serialize() for item in items]
     app.logger.info("Returning %d items", len(results))
     return jsonify(results), status.HTTP_200_OK
 
@@ -42,6 +59,7 @@ def list_inventory():
 @app.route("/inventory/<int:pid>", methods=["GET"])
 def get_inventory(pid):
     """ Retrieves Inventory items """
+
     condition = None
     condition = request.args.get("condition")
     if condition:
@@ -117,37 +135,83 @@ def update_inventory(pid):
     item = item.deserialize(request.get_json())
     item.update()
 
-    app.logger.info("Inventory item with PID [%s] and condition [%s] updated",
-    pid, arguments["condition"])
+    app.logger.info(f"Inventory item with PID {pid} and condition {arguments['condition']} updated")
     return jsonify(item.serialize()), status.HTTP_200_OK
 
 ######################################################################
 # DELETE A INVENTORY ITEM
 ######################################################################
 @app.route("/inventory/<int:pid>", methods=["DELETE"])
-def delete_inventory(pid):
+def delete_inventory_pid(pid):
     """ Delete an Inventory item"""
-    app.logger.info("Request to delete Inventory item with PID: %s", pid)
+    app.logger.info("Request to delete all Inventory items with PID: %s", pid)
 
-    condition = []
-    condition = request.args.get("condition")
 
-    if condition:
-        item = Inventory.find_by_pid_condition(pid, condition)
-        if item:
-            item.delete()
-            app.logger.info(f"Inventory item with PID {pid}"
-            f" and Condition {condition} deleted")
-    else:
+    items = Inventory.find_by_pid(pid)
+    if items.count() != 0:
+        for i in items:
+            i.delete()
 
-        items = Inventory.find_by_pid(pid)
-        if items.count() != 0:
-            for i in items:
-                i.delete()
-
-            app.logger.info(f"All Inventory items with PID {pid} deleted")
+        app.logger.info(f"All Inventory items with PID {pid} deleted")
 
     return "", status.HTTP_204_NO_CONTENT
+
+
+@app.route("/inventory/<int:pid>/<int:condition>", methods=["DELETE"])
+def delete_inventory_pid_condition(pid, condition):
+    """ Delete an Inventory item"""
+    app.logger.info(f"Request to delete Inventory item with PID: {pid} and Condition {condition}")
+
+    item = Inventory.find_by_pid_condition(pid, condition)
+    if item:
+        item.delete()
+        app.logger.info(f"Inventory item with PID {pid}"
+        f" and Condition {condition} deleted")
+
+        app.logger.info(f"All Inventory items with PID: {pid} and Condition {condition} deleted")
+
+    return "", status.HTTP_204_NO_CONTENT
+
+
+
+############################################################
+# ACTIVATE
+############################################################
+
+@app.route("/inventory/activate/<int:pid>/<int:condition>", methods=["PUT"])
+def activate_inventory(pid, condition):
+    """ Activates an Inventory item """
+
+    app.logger.info(f"Request to activate item with PID {pid} and condition {condition}")
+
+    item = Inventory.find_by_pid_condition(pid, condition)
+    if not item:
+        abort(status.HTTP_404_NOT_FOUND,
+              f"Item with PID {pid} and Condition {condition} not found.")
+
+    item.activate()
+    app.logger.info(f"Item with PID {pid}: active status is set to true.")
+    return jsonify(item.serialize()), status.HTTP_200_OK
+
+
+############################################################
+# DE-ACTIVATE
+############################################################
+@app.route("/inventory/deactivate/<int:pid>/<int:condition>", methods=["PUT"])
+def deactivate_inventory(pid, condition):
+    """ Dectivates an Inventory item """
+
+    app.logger.info(f"Request to activate item with PID {pid} and condition {condition}")
+
+    item = Inventory.find_by_pid_condition(pid, condition)
+    if not item:
+        abort(status.HTTP_404_NOT_FOUND,
+              f"Item with PID {pid} and Condition {condition} not found.")
+
+    item.deactivate()
+    app.logger.info(f"Item with PID {pid}: active status is set to true.")
+    return jsonify(item.serialize()), status.HTTP_200_OK
+
 
 
 ######################################################################

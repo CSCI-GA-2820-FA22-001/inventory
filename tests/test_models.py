@@ -3,7 +3,7 @@ import os
 import logging
 import unittest
 from service import app
-from service.models import Inventory, db, DataValidationError
+from service.models import Inventory, db, DataValidationError, Condition
 from tests.factories import InventoryFactory
 
 
@@ -225,6 +225,24 @@ class TestInventory(unittest.TestCase):
         self.assertRaises(DataValidationError, item.deserialize, data)
 
 
+    def test_find_item_pid_condition(self):
+        """It should Find an item by PID and Condition"""
+        items = InventoryFactory.create_batch(5)
+        for i in items:
+            i.create()
+
+        self.assertEqual(len(Inventory.all()), 5)
+
+        item = items[1]
+        found_item = Inventory.find_by_pid_condition(item.pid, item.condition.value)
+        self.assertIsNot(found_item, None)
+        self.assertEqual(found_item.pid, item.pid)
+        self.assertEqual(found_item.name, item.name)
+        self.assertEqual(found_item.condition, item.condition)
+        self.assertEqual(found_item.quantity, item.quantity)
+        self.assertEqual(found_item.restock_level, item.restock_level)
+        self.assertEqual(found_item.active, item.active)
+
     def test_find_item_pid(self):
         """It should Find an item by PID"""
         items = InventoryFactory.create_batch(5)
@@ -243,17 +261,26 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(found_item.restock_level, item.restock_level)
         self.assertEqual(found_item.active, item.active)
 
+    def test_find_item_bad_pid(self):
+        """It should Find a list of items with a bad PID"""
+        self.assertRaises(DataValidationError, Inventory.find_by_pid, "Test")
 
-    def test_find_item_pid_condition(self):
-        """It should Find an item by PID and Condition"""
+
+    def test_find_item_condition(self):
+        """It should Find a list of items by Condition"""
         items = InventoryFactory.create_batch(5)
+        items[0].condition = Condition(0)
+        items[1].condition = Condition(1)
+        items[2].condition = Condition(1)
+        items[3].condition = Condition(1)
+        items[4].condition = Condition(1)
+
         for i in items:
             i.create()
 
         self.assertEqual(len(Inventory.all()), 5)
-
-        item = items[1]
-        found_item = Inventory.find_by_pid_condition(item.pid, item.condition.value)
+        item = items[0]
+        found_item = Inventory.find_by_condition(0)[0]
         self.assertIsNot(found_item, None)
         self.assertEqual(found_item.pid, item.pid)
         self.assertEqual(found_item.name, item.name)
@@ -261,3 +288,35 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(found_item.quantity, item.quantity)
         self.assertEqual(found_item.restock_level, item.restock_level)
         self.assertEqual(found_item.active, item.active)
+
+    def test_find_item_bad_condition(self):
+        """It should not Find a list of items with a bad Condition"""
+        self.assertRaises(DataValidationError, Inventory.find_by_condition, "Test")
+
+
+    def test_find_item_active(self):
+        """It should Find a list of items by Active status"""
+        items = InventoryFactory.create_batch(5)
+        items[0].active = False
+        items[1].active = True
+        items[2].active = True
+        items[3].active = True
+        items[4].active = True
+
+        for i in items:
+            i.create()
+
+        self.assertEqual(len(Inventory.all()), 5)
+        item = items[0]
+        found_item = Inventory.find_by_active(False)[0]
+        self.assertIsNot(found_item, None)
+        self.assertEqual(found_item.pid, item.pid)
+        self.assertEqual(found_item.name, item.name)
+        self.assertEqual(found_item.condition, item.condition)
+        self.assertEqual(found_item.quantity, item.quantity)
+        self.assertEqual(found_item.restock_level, item.restock_level)
+        self.assertEqual(found_item.active, item.active)
+
+    def test_find_item_bad_active(self):
+        """It should not Find a list of items with a bad Active"""
+        self.assertRaises(DataValidationError, Inventory.find_by_active, 69.4)
