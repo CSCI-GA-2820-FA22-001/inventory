@@ -61,6 +61,7 @@ class Inventory(db.Model):
         # pylint: disable=invalid-name
         # pylint: disable=attribute-defined-outside-init
         self.id = None
+
         db.session.add(self)
         db.session.commit()
 

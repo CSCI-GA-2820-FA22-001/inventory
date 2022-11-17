@@ -11,6 +11,7 @@ from tests.factories import InventoryFactory
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
 )
+HEALTH_BASE_URL = "/health"
 BASE_URL = "/inventory"
 
 
@@ -122,7 +123,7 @@ class TestInventoryServer(TestCase):
 
 
     def test_get_inventory_with_pid_without_condition(self):
-        """It should Get all Inventory itsems with the given PID"""
+        """It should Get all Inventory items with the given PID"""
         test_item_one = InventoryFactory()
         test_item_one.condtion = Condition(0)
         test_item_one.create()
@@ -356,16 +357,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(data["active"], False)
 
 
-
-# def test_get_inventory_with_pid_with_condition(self):
-#         """It should Get a single Inventory item with the given PID and Condition"""
-#         test_item = InventoryFactory()
-#         test_item.create()
-#         response = self.client.get(
-#             f"{BASE_URL}/{test_item.pid}",
-#             query_string= f"condition={test_item.condition.value}")
-
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         data = response.get_json()
-#         self.assertEqual(data["pid"], test_item.pid)
-#         self.assertEqual(Condition(data["condition"]), test_item.condition)
+    def test_health_check(self):
+        """It should return a 200 OK status"""
+        response = self.client.get(f"{HEALTH_BASE_URL}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
