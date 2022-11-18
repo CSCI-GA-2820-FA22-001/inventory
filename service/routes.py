@@ -43,6 +43,7 @@ def list_inventory():
         items = Inventory.find_by_condition(condition)
     elif active:
         app.logger.info("filtered by active")
+        active = active in ["true", "True", "TRUE"]
         items = Inventory.find_by_active(active)
     else:
         app.logger.info("find all")
@@ -139,7 +140,7 @@ def update_inventory(pid):
     return jsonify(item.serialize()), status.HTTP_200_OK
 
 ######################################################################
-# DELETE A INVENTORY ITEM
+# DELETE INVENTORY ITEMS BY PID
 ######################################################################
 @app.route("/inventory/<int:pid>", methods=["DELETE"])
 def delete_inventory_pid(pid):
@@ -155,6 +156,10 @@ def delete_inventory_pid(pid):
         app.logger.info(f"All Inventory items with PID {pid} deleted")
 
     return "", status.HTTP_204_NO_CONTENT
+
+######################################################################
+# DELETE A SINGLE INVENTORY ITEM
+######################################################################
 
 
 @app.route("/inventory/<int:pid>/<int:condition>", methods=["DELETE"])
@@ -215,8 +220,9 @@ def deactivate_inventory(pid, condition):
 
 
 ######################################################################
-# HEALTH CHECK FOR APP
+# HEALTH CHECK
 ######################################################################
+
 @app.route("/health", methods=["GET"])
 def health():
     """Get Shallow Health of the current Service"""
