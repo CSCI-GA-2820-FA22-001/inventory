@@ -15,5 +15,13 @@
 		"5432": {
 			"label": "5432:"
 		}
+	},
+	"features": {
+		"docker-in-docker": "latest",
+		"kubectl-helm-minikube": {
+			"version": "latest",
+			"helm": "latest",
+			"minikube": "none"
+		}
 	}
 }
