@@ -125,7 +125,7 @@ class TestInventoryServer(TestCase):
     def test_get_inventory_with_pid_without_condition(self):
         """It should Get all Inventory items with the given PID"""
         test_item_one = InventoryFactory()
-        test_item_one.condtion = Condition(0)
+        test_item_one.condition = Condition(0)
         test_item_one.create()
 
         test_item_two = InventoryFactory()
@@ -270,7 +270,7 @@ class TestInventoryServer(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_inventory_bad_condition(self):
-        """It should not Update an item with an invalid Condtion """
+        """It should not Update an item with an invalid Condition """
         test_item = InventoryFactory()
         response = self.client.post(BASE_URL, json=test_item.serialize())
 
