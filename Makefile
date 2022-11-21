@@ -1,3 +1,6 @@
+NAMESPACE ?= nyu-devops
+CLUSTER ?= nyu-devops
+
 .PHONY: all help install venv test run
 
 help: ## Display this help
@@ -25,3 +28,16 @@ test: ## Run the unit tests
 run: ## Run the service
 	$(info Starting service...)
 	honcho start
+
+.PHONY: deploy
+deploy: ## Deploy the service on local Kubernetes
+	$(info Deploying service locally...)
+	kubectl apply -f deploy/
+
+.PHONY: login
+login: ## Login to IBM Cloud using yur api key
+	$(info Logging into IBM Cloud cluster $(CLUSTER)...)
+	ibmcloud login -a cloud.ibm.com -g Default -r eu-de --apikey @~/apikey.json
+	ibmcloud cr login
+	ibmcloud ks cluster config --cluster $(CLUSTER)
+	kubectl cluster-info
