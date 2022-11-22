@@ -33,3 +33,7 @@ ENV TERM=xterm-256color
 
 # Become a regular user
 USER $USERNAME
+
+# Install user mode tools
+COPY .devcontainer/scripts/install-tools.sh /tmp/
+RUN cd /tmp; bash ./install-tools.sh
