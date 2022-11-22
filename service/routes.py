@@ -15,14 +15,6 @@ def index():
     """Root URL response sends a basic list of endpoints available from the Flask App"""
     app.logger.info("Request for Root URL")
     return app.send_static_file("index.html")
-    # return (
-    #     jsonify(
-    #         name="Inventory Service REST API",
-    #         version="1.0",
-    #         paths =url_for("list_inventory", _external=True)
-    #         ),
-    #     status.HTTP_200_OK
-    # )
 
 
 ######################################################################
