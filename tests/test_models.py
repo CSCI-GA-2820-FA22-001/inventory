@@ -12,6 +12,7 @@ DATABASE_URI = os.getenv(
 )
 BASE_URL = "/inventory"
 
+
 ######################################################################
 #  INVENTORY   M O D E L   T E S T   C A S E S
 ######################################################################
@@ -55,7 +56,6 @@ class TestInventory(unittest.TestCase):
         self.assertIsNotNone(test_item.quantity)
         self.assertIsNotNone(test_item.restock_level)
         self.assertIsNotNone(test_item.active)
-
 
     def test_add_an_item(self):
         """It should Create an item and add it to the Inventory"""
@@ -115,7 +115,6 @@ class TestInventory(unittest.TestCase):
         item.quantity = 200
         self.assertRaises(DataValidationError, item.update)
 
-
     def test_delete_an_item(self):
         """It should Delete an item in the Inventory"""
         item = InventoryFactory()
@@ -168,62 +167,60 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(item.restock_level, data["restock_level"])
         self.assertEqual(item.active, data["active"])
 
-
     def test_deserialize_an_item_missing_data(self):
-        """It should not Deserialize an item with missing data """
+        """It should not Deserialize an item with missing data"""
         item = InventoryFactory()
         data = item.serialize()
-        data.pop('quantity')
+        data.pop("quantity")
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_an_item_bad_data(self):
-        """It should not Deserialize an item with bad data """
+        """It should not Deserialize an item with bad data"""
         item = InventoryFactory()
         data = "Test"
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_an_item_bad_pid(self):
-        """It should not Deserialize an item with bad PID """
+        """It should not Deserialize an item with bad PID"""
         item = InventoryFactory()
         item.pid = "Test"
         data = item.serialize()
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_an_item_bad_condition(self):
-        """It should not Deserialize an item with bad Condition """
+        """It should not Deserialize an item with bad Condition"""
         item = InventoryFactory()
         data = item.serialize()
         data["condition"] = "Test"
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_an_item_bad_name(self):
-        """It should not Deserialize an item with bad Name """
+        """It should not Deserialize an item with bad Name"""
         item = InventoryFactory()
         item.name = 0
         data = item.serialize()
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_an_item_bad_quantity(self):
-        """It should not Deserialize an item with bad Quantity """
+        """It should not Deserialize an item with bad Quantity"""
         item = InventoryFactory()
         item.quantity = "Test"
         data = item.serialize()
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_an_item_bad_restock_level(self):
-        """It should not Deserialize an item with bad Restock Level """
+        """It should not Deserialize an item with bad Restock Level"""
         item = InventoryFactory()
         item.restock_level = "Test"
         data = item.serialize()
         self.assertRaises(DataValidationError, item.deserialize, data)
 
     def test_deserialize_an_item_bad_active(self):
-        """It should not Deserialize an item with bad Active """
+        """It should not Deserialize an item with bad Active"""
         item = InventoryFactory()
         item.active = "Test"
         data = item.serialize()
         self.assertRaises(DataValidationError, item.deserialize, data)
-
 
     def test_find_item_pid_condition(self):
         """It should Find an item by PID and Condition"""
@@ -265,7 +262,6 @@ class TestInventory(unittest.TestCase):
         """It should Find a list of items with a bad PID"""
         self.assertRaises(DataValidationError, Inventory.find_by_pid, "Test")
 
-
     def test_find_item_condition(self):
         """It should Find a list of items by Condition"""
         items = InventoryFactory.create_batch(5)
@@ -292,7 +288,6 @@ class TestInventory(unittest.TestCase):
     def test_find_item_bad_condition(self):
         """It should not Find a list of items with a bad Condition"""
         self.assertRaises(DataValidationError, Inventory.find_by_condition, "Test")
-
 
     def test_find_item_active(self):
         """It should Find a list of items by Active status"""

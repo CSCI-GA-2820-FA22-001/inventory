@@ -26,7 +26,7 @@ class Condition(Enum):
 
 
 class Inventory(db.Model):
-    """ Class that represents a Inventory """
+    """Class that represents a Inventory"""
 
     app = None
 
@@ -37,17 +37,16 @@ class Inventory(db.Model):
     restock_level = db.Column(db.Integer)
     active = db.Column(db.Boolean)
 
-
     def __init__(
         self,
         pid: int,
         condition: Condition,
-        name = "",
-        quantity = 1,
-        restock_level = 10,
-        active = True,
+        name="",
+        quantity=1,
+        restock_level=10,
+        active=True,
     ):
-        """ Constructor for Item in Inventory """
+        """Constructor for Item in Inventory"""
         self.pid = pid
         self.condition = condition
         self.name = name
@@ -55,9 +54,8 @@ class Inventory(db.Model):
         self.restock_level = restock_level
         self.active = active
 
-
     def create(self):
-        """ Creates an Inventory item in the database """
+        """Creates an Inventory item in the database"""
         # pylint: disable=invalid-name
         # pylint: disable=attribute-defined-outside-init
         self.id = None
@@ -66,7 +64,7 @@ class Inventory(db.Model):
         db.session.commit()
 
     def update(self):
-        """ Updates an Inventory Item in the database"""
+        """Updates an Inventory Item in the database"""
         if self.pid is None:
             raise DataValidationError("pid must be provided")
         if self.condition is None:
@@ -74,7 +72,7 @@ class Inventory(db.Model):
         db.session.commit()
 
     def delete(self):
-        """ Removes a Inventory item from database"""
+        """Removes a Inventory item from database"""
         db.session.delete(self)
         db.session.commit()
 
@@ -90,51 +88,60 @@ class Inventory(db.Model):
         }
 
     def deserialize(self, data: dict):
-        """ Creates an Inventory item from a dictionary """
+        """Creates an Inventory item from a dictionary"""
         try:
             if isinstance(data["pid"], int):
                 self.pid = data["pid"]
             else:
-                raise DataValidationError("Invalid type for int [pid]: "
-                + str(type(data["pid"])))
+                raise DataValidationError(
+                    "Invalid type for int [pid]: " + str(type(data["pid"]))
+                )
 
-            #pylint: disable=protected-access
+            # pylint: disable=protected-access
             if data["condition"] in Condition._value2member_map_:
                 self.condition = Condition(data["condition"])
             else:
-                raise DataValidationError("Invalid condition: "
-                + str(type(data["condition"])))
+                raise DataValidationError(
+                    "Invalid condition: " + str(type(data["condition"]))
+                )
 
             if isinstance(data["name"], str):
                 self.name = data["name"]
             else:
-                raise DataValidationError("Invalid type for str [name]: "
-                + str(type(data["name"])))
+                raise DataValidationError(
+                    "Invalid type for str [name]: " + str(type(data["name"]))
+                )
 
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
             else:
-                raise DataValidationError("Invalid type for int [quantity]: "
-                + str(type(data["quantity"])))
+                raise DataValidationError(
+                    "Invalid type for int [quantity]: " + str(type(data["quantity"]))
+                )
 
             if isinstance(data["restock_level"], int):
                 self.restock_level = data["restock_level"]
             else:
-                raise DataValidationError("Invalid type for int [restock_level]: "
-                + str(type(data["restock_level"])))
+                raise DataValidationError(
+                    "Invalid type for int [restock_level]: "
+                    + str(type(data["restock_level"]))
+                )
 
             if isinstance(data["active"], bool):
                 self.active = data["active"]
             else:
-                raise DataValidationError("Invalid type for bool [active]: "
-                + str(type(data["active"])))
+                raise DataValidationError(
+                    "Invalid type for bool [active]: " + str(type(data["active"]))
+                )
 
         # except ValueError as error:
         #     raise DataValidationError("Invalid value: " + error.args[0]) from error
         # except AttributeError as error:
         #     raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
-            raise DataValidationError("Invalid item: missing " + error.args[0]) from error
+            raise DataValidationError(
+                "Invalid item: missing " + error.args[0]
+            ) from error
         except TypeError as error:
             raise DataValidationError(
                 "Invalid item: body of request contained bad or no data " + str(error)
@@ -143,11 +150,11 @@ class Inventory(db.Model):
         return self
 
     def activate(self):
-        """ Sets the active flag to true """
+        """Sets the active flag to true"""
         self.active = True
 
     def deactivate(self):
-        """ Sets the active flag to false """
+        """Sets the active flag to false"""
         self.active = False
 
     @classmethod
@@ -170,8 +177,9 @@ class Inventory(db.Model):
         try:
             condition = Condition(int(condition_value))
         except ValueError as error:
-            raise DataValidationError(f"Condition {condition_value} is invalid :"
-                + str(error)) from error
+            raise DataValidationError(
+                f"Condition {condition_value} is invalid :" + str(error)
+            ) from error
 
         try:
             pid = int(pid)
@@ -188,8 +196,7 @@ class Inventory(db.Model):
         try:
             pid = int(pid)
         except ValueError as error:
-            raise DataValidationError(f"PID {pid} is invalid :"
-                + str(error)) from error
+            raise DataValidationError(f"PID {pid} is invalid :" + str(error)) from error
         return cls.query.filter(cls.pid == pid)
 
     @classmethod
@@ -198,11 +205,11 @@ class Inventory(db.Model):
         try:
             condition = Condition(int(condition_value))
         except ValueError as error:
-            raise DataValidationError(f"Condition {condition_value} is invalid :"
-                + str(error)) from error
+            raise DataValidationError(
+                f"Condition {condition_value} is invalid :" + str(error)
+            ) from error
 
         return cls.query.filter(cls.condition == condition)
-
 
     @classmethod
     def find_by_active(cls, active):
