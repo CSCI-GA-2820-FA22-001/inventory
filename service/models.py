@@ -58,7 +58,6 @@ class Inventory(db.Model):
         """Creates an Inventory item in the database"""
         # pylint: disable=invalid-name
         # pylint: disable=attribute-defined-outside-init
-        self.id = None
 
         db.session.add(self)
         db.session.commit()
@@ -134,10 +133,6 @@ class Inventory(db.Model):
                     "Invalid type for bool [active]: " + str(type(data["active"]))
                 )
 
-        # except ValueError as error:
-        #     raise DataValidationError("Invalid value: " + error.args[0]) from error
-        # except AttributeError as error:
-        #     raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
             raise DataValidationError(
                 "Invalid item: missing " + error.args[0]
@@ -186,7 +181,6 @@ class Inventory(db.Model):
         except ValueError as error:
             raise DataValidationError(f"PID {pid} is invalid :" + str(error)) from error
 
-        result = []
         result = cls.query.filter(cls.pid == pid, cls.condition == condition).first()
         return result
 
@@ -214,7 +208,8 @@ class Inventory(db.Model):
     @classmethod
     def find_by_active(cls, active):
         """Finds a Inventory item by it's Active status"""
-        if not isinstance(active, bool):
-            raise DataValidationError(f"Active {active} is invalid")
+        if (active is True) or (active is False):
+            return cls.query.filter(cls.active == active)
 
-        return cls.query.filter(cls.active == active)
+        else:
+            raise DataValidationError(f"Active {active} is invalid")
