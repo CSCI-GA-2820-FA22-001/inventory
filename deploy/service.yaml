@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory
+spec:
+  selector:
+    app: inventory
+  type: NodePort
+  internalTrafficPolicy: Local
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8000
+      nodePort: 31001
+      targetPort: 8000
