@@ -313,13 +313,22 @@ $(function () {
         }
 
         $("#flash_message").empty();
-
-        let ajax = $.ajax({
-            type: "GET",
-            url: `/inventory/${pid}?${queryString}`,
-            contentType: "application/json",
-            data: ''
-        })
+        let ajax = null
+        if(pid==0) {
+            ajax = $.ajax({
+                type: "GET",
+                url: `/inventory?${queryString}`,
+                contentType: "application/json",
+                data: ''
+            })
+        } else {
+            ajax = $.ajax({
+                type: "GET",
+                url: `/inventory/${pid}?${queryString}`,
+                contentType: "application/json",
+                data: ''
+            })
+        }
 
         ajax.done(function (res) {
             //alert(res.toSource())
