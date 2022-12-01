@@ -88,3 +88,58 @@ Scenario: Create an Inventory
     Then I should see "201" in the results
     And I should see "0" in the results
     And I should see "203" in the results
+
+####################################################################################################
+# UPDATE
+Scenario: Uodate an Inventory
+    When I visit the "Home Page"
+    And I press the "clear" button
+    And I set the "pid" to "101"
+    And I set the "quantity" to "102"
+    And I set the "restock_level" to "103"
+    And I set the "name" to "NameTest"
+    And I select "New" in the "condition" dropdown
+    And I select "False" in the "active" dropdown
+    And I press the "create" button
+    Then I should see the message "Success"
+
+    When I copy the "pid" field
+    And I press the "clear" button
+    Then the "pid" field should be empty
+    Then the "quantity" field should be empty
+    Then the "restock_level" field should be empty
+
+    When I set the "pid" to "101"
+    And I select "New" in the "condition" dropdown
+    And I press the "search" button
+    Then I should see the message "Success"
+    And I should see "101" in the results
+    And I should see "0" in the results
+    And I should see "103" in the results
+
+    When I press the "clear" button
+    And I set the "pid" to "101"
+    And I set the "quantity" to "202"
+    And I set the "restock_level" to "203"
+    And I set the "name" to "NameTest2"
+    And I select "New" in the "condition" dropdown
+    And I select "False" in the "active" dropdown
+    And I press the "update" button
+    Then I should see the message "Success"
+
+    When I copy the "pid" field
+    And I press the "clear" button
+    Then the "pid" field should be empty
+    Then the "quantity" field should be empty
+    Then the "restock_level" field should be empty
+
+    When I set the "pid" to "101"
+    And I select "New" in the "Condition" dropdown
+    And I press the "search" button
+    Then I should see the message "Success"
+    Then I should see "101" in the results
+    And I should see "0" in the results
+    And I should not see "102" in the results
+    And I should see "202" in the results
+    And I should not see "103" in the results
+    And I should see "203" in the results
