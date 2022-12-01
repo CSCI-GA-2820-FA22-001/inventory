@@ -143,3 +143,16 @@ Scenario: Uodate an Inventory
     And I should see "202" in the results
     And I should not see "103" in the results
     And I should see "203" in the results
+
+####################################################################################################
+# DELETE
+Scenario: Delete an Inventory
+    When I visit the "Home Page"
+    And I press the "clear" button
+    And I set the "pid" to "8"
+    And I select "New" in the "condition" dropdown
+    And I press the "delete" button
+    Then I should see the message "Inventory Item Deleted!"
+
+    When I press the "search" button
+    Then I should not see "8" in the results
