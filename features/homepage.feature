@@ -10,6 +10,7 @@ Background:
         | 6         | 1         | Test2     | 2         | 11            | False    |
         | 7         | 2         | Test3     | 3         | 12            | True     |
         | 8         | 0         | Test4     | 4         | 13            | True     |
+        | 5         | 1         | Test5     | 1         | 14            | False    | 
 
 Scenario: The server is running
     When I visit the "Home Page"
@@ -35,7 +36,7 @@ Scenario: Don't list incorrect data
     When I visit the "Home Page"
     And I press the "listAll" button
     Then I should see the message "Success"
-    And I should not see "Test5" in the results
+    And I should not see "Test6" in the results
 
 ####################################################################################################
 # INSERT
@@ -156,3 +157,40 @@ Scenario: Delete an Inventory
 
     When I press the "search" button
     Then I should not see "8" in the results
+
+####################################################################################################
+# GET
+Scenario: Retrieve an Inventory Record
+    When I visit the "Home Page"
+    And I press the "clear" button
+    And I set the "pid" to "6"
+    And I select "Used" in the "condition" dropdown
+    And I press the "retrieve" button
+    Then I should see the message "Success"
+    And I should see "11" in the "restock_level" field
+    And I should see "1" in the "condition" field
+    And I should see "False" in the "active" dropdown
+
+Scenario: Search for request paramenter based Inventories
+    When I visit the "Home Page"
+    And I press the "clear" button
+    And I select "Used" in the "condition" dropdown
+    And I press the "search" button
+    Then I should see "11" in the results
+    And I should see "14" in the results
+
+    When I visit the "Home Page"
+    And I press the "clear" button
+    And I set the "pid" to "5"
+    And I press the "search" button
+    Then I should see "10" in the results
+    And I should see "14" in the results
+    And I should not see "8" in the results
+    And I should not see "13" in the results
+
+    When I visit the "Home Page"
+    And I press the "clear" button
+    And I select "True" in the "active" dropdown
+    And I press the "search" button
+    Then I should see "10" in the results
+    And I should see "12" in the results
