@@ -12,7 +12,7 @@ DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
 )
 HEALTH_BASE_URL = "/health"
-BASE_URL = "/api/inventory"
+BASE_URL = "/inventory"
 
 
 ######################################################################

@@ -8,6 +8,15 @@ from .common import status
 from . import app
 
 ######################################################################
+# GET INDEX
+######################################################################
+@app.route("/")
+def index():
+    """Root URL response sends a basic list of endpoints available from the Flask App"""
+    app.logger.info("Request for Root URL")
+    return app.send_static_file("index.html")
+    
+######################################################################
 # Configure Swagger before initializing it
 ######################################################################
 
@@ -18,7 +27,7 @@ api = Api(app,
           default='inventory',
           default_label='Inventory operations',
           doc='/apidocs', # default also could use doc='/apidocs/'
-          prefix='/api'
+          prefix='/'
          )
 
 #Define the create model so that the docs define what can be sent
@@ -62,14 +71,7 @@ inventory_args.add_argument('restock_level', type=int, required=False, location=
 inventory_args.add_argument('active', type=inputs.boolean, required=False, location='args', help='List inventorys by active status')
 
 
-######################################################################
-# GET INDEX
-######################################################################
-@app.route("/")
-def index():
-    """Root URL response sends a basic list of endpoints available from the Flask App"""
-    app.logger.info("Request for Root URL")
-    return app.send_static_file("index.html")
+
 
 
 ######################################################################
